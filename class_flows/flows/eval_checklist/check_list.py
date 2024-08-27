@@ -74,9 +74,7 @@ if __name__ == "__main__":
         "concise": "It is a concise statement.",
     }
 
-    config = AzureOpenAIModelConfiguration(
-        connection="open_ai_connection", azure_deployment="gpt-4o"
-    )
+    config = AzureOpenAIModelConfiguration(connection="aoai", azure_deployment="gpt-4o")
     flow = EvalFlow(config)
 
     result = flow(
