@@ -17,7 +17,9 @@ from promptflow.client import PFClient
 
 import os
 from typing import Any, Dict
+from dotenv import load_dotenv
 
+load_dotenv()
 CONNECTION_CLASSES: Dict[str, Any] = {
     "azureopenaiconnection": AzureOpenAIConnection,
     "openaiconnection": OpenAIConnection,
