@@ -1,4 +1,3 @@
-
 # Implement your custom evaluation here
 import os
 from promptflow.core import AzureOpenAIModelConfiguration
@@ -8,17 +7,18 @@ from class_flows.flows.chat_basic.flow import ChatFlow
 
 
 def eval_use_case(
-        run_name,
-        data_id,
-        column_mapping,
-        output_path,
-        azure_service={},
+    run_name,
+    data_id,
+    column_mapping,
+    output_path,
+    azure_service={},
 ):
     model_config = AzureOpenAIModelConfiguration(
         azure_endpoint=os.environ.get("AZURE_OPENAI_ENDPOINT"),
         api_key=os.environ.get("AZURE_OPENAI_API_KEY"),
         azure_deployment=os.environ.get("DEPLOYMENT_NAME"),
     )
+    print(f"Debug Model config - {model_config}")
     chat_flow = ChatFlow(model_config=model_config, max_total_token=4096)
 
     groundness_eval = GroundednessEvaluator(model_config=model_config)
@@ -34,7 +34,6 @@ def eval_use_case(
         },
         azure_ai_project=azure_service,
         output_path=f"{output_path}/{run_name}.json",
-
     )
 
     return results
