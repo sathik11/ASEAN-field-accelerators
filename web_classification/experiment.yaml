@@ -4,7 +4,7 @@ flow: flows/experiment
 connections:
   - name: aoai
     connection_type: AzureOpenAIConnection
-    api_base: https://ai-ssattirajullmopshub370967103220.openai.azure.com/
+    api_base: https://ss-cchat-sf-ai-aiservices7wx5mg43sbnl4.openai.azure.com/
     api_version: 2024-02-15-preview
     api_key: ${api_key}
     api_type: azure
