@@ -58,9 +58,7 @@ if __name__ == "__main__":
     from promptflow.tracing import start_trace
 
     start_trace()
-    config = AzureOpenAIModelConfiguration(
-        connection="aoai", azure_deployment="gpt-35-turbo"
-    )
+    config = AzureOpenAIModelConfiguration(connection="aoai", azure_deployment="gpt-4o")
     flow = ChatFlow(config)
     result = flow("What's Azure Machine Learning?", [])
     print(result)

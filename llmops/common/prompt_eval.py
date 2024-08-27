@@ -27,15 +27,8 @@ import importlib
 
 from azure.identity import DefaultAzureCredential
 
-from llmops.common.common import (
-    FlowTypeOption,
-    ClientObjectWrapper as ObjectWrapper
-)
-from llmops.common.common import (
-    resolve_run_ids,
-    resolve_flow_type,
-    resolve_env_vars
-)
+from llmops.common.common import FlowTypeOption, ClientObjectWrapper as ObjectWrapper
+from llmops.common.common import resolve_run_ids, resolve_flow_type, resolve_env_vars
 from llmops.common.experiment_cloud_config import ExperimentCloudConfig
 from llmops.common.experiment import load_experiment
 from llmops.common.logger import llmops_logger
@@ -48,12 +41,7 @@ from azure.ai.ml import MLClient
 
 logger = llmops_logger("prompt_eval")
 
-files_to_check = [
-    'flow.flex.yaml',
-    'flow.flex.yml',
-    'flow.dag.yaml',
-    'flow.dag.yml'
-]
+files_to_check = ["flow.flex.yaml", "flow.flex.yml", "flow.dag.yaml", "flow.dag.yml"]
 
 
 def prepare_and_execute(
@@ -76,9 +64,7 @@ def prepare_and_execute(
     Returns:
         None
     """
-    config = ExperimentCloudConfig(subscription_id=subscription_id,
-                                   env_name=env_name
-                                   )
+    config = ExperimentCloudConfig(subscription_id=subscription_id, env_name=env_name)
     experiment = load_experiment(
         filename=exp_filename, base_path=base_path, env=config.environment_name
     )
@@ -88,19 +74,13 @@ def prepare_and_execute(
 
     eval_flows = experiment.evaluators
 
-    flow_type, params_dict = resolve_flow_type(experiment.base_path,
-                                               experiment.flow
-                                               )
+    flow_type, params_dict = resolve_flow_type(experiment.base_path, experiment.flow)
 
     wrapper = None
     ml_client = None
     if EXECUTION_TYPE == "LOCAL":
         pf = PFClientLocal()
-        create_pf_connections(
-            exp_filename,
-            base_path,
-            env_name
-        )
+        create_pf_connections(exp_filename, base_path, env_name)
         wrapper = ObjectWrapper(pf=pf)
     else:
 
@@ -114,7 +94,7 @@ def prepare_and_execute(
             credential=DefaultAzureCredential(),
             subscription_id=config.subscription_id,
             workspace_name=config.workspace_name,
-            resource_group_name=config.resource_group_name
+            resource_group_name=config.resource_group_name,
         )
 
         wrapper = ObjectWrapper(pf=pf, ml_client=ml_client)
@@ -169,16 +149,12 @@ def prepare_and_execute(
                 run_data_name = run_data_id.split(":")[1]
                 run_dataset = experiment.get_dataset(run_data_name)
             else:
-                run_data_name = os.path.sep.join(run_data_id.split(
-                    os.path.sep)[-2:]
-                    )
+                run_data_name = os.path.sep.join(run_data_id.split(os.path.sep)[-2:])
                 print(run_data_name)
                 for ds in experiment.datasets:
                     print(ds.dataset.source)
                     if ds.dataset.source == run_data_name:
-                        run_dataset = experiment.get_dataset(
-                            ds.dataset.name
-                            )
+                        run_dataset = experiment.get_dataset(ds.dataset.name)
                         break
                     else:
                         run_dataset = None
@@ -196,8 +172,8 @@ def prepare_and_execute(
 
             for dataset_mapping in dataset_mapping_list:
                 logger.info(
-                        f"Preparing evaluation of run {flow_run} "
-                        f"using dataset {dataset_mapping.dataset.name}"
+                    f"Preparing evaluation of run {flow_run} "
+                    f"using dataset {dataset_mapping.dataset.name}"
                 )
                 column_mapping = dataset_mapping.mappings
                 dataset = dataset_mapping.dataset
@@ -205,22 +181,16 @@ def prepare_and_execute(
                     dataset.get_local_source(base_path)
                     if EXECUTION_TYPE == "LOCAL"
                     else dataset.get_remote_source(pf.ml_client)
-                    )
+                )
 
                 evaluator_executed = True
                 # Create run object
                 if not experiment.runtime:
-                    logger.info(
-                        "Using automatic runtime and serverless compute"
-                    )
+                    logger.info("Using automatic runtime and serverless compute")
                 else:
-                    logger.info(
-                        f"Using runtime '{experiment.runtime}' for runn"
-                    )
+                    logger.info(f"Using runtime '{experiment.runtime}' for runn")
 
-                timestamp = datetime.datetime.now().strftime(
-                    "%Y%m%d_%H%M%S"
-                    )
+                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                 run_name = f"{experiment_name}_eval_{timestamp}"
                 runtime_resources = (
                     None
@@ -229,14 +199,16 @@ def prepare_and_execute(
                 )
                 # Check if any of the files exist in the directory
                 files_found = [
-                    file for file in files_to_check
-                    if os.path.isfile(
-                        os.path.join(evaluator.path, file)
-                    )]
+                    file
+                    for file in files_to_check
+                    if os.path.isfile(os.path.join(evaluator.path, file))
+                ]
 
                 if files_found:
-                    if flow_type == FlowTypeOption.DAG_FLOW \
-                            or flow_type == FlowTypeOption.FUNCTION_FLOW:
+                    if (
+                        flow_type == FlowTypeOption.DAG_FLOW
+                        or flow_type == FlowTypeOption.FUNCTION_FLOW
+                    ):
                         run = pf.run(
                             flow=evaluator.path,
                             data=data_id,
@@ -245,9 +217,7 @@ def prepare_and_execute(
                             display_name=run_name,
                             environment_variables=env_vars,
                             column_mapping=column_mapping,
-                            tags={} if not build_id else {
-                                "build_id": build_id
-                                },
+                            tags={} if not build_id else {"build_id": build_id},
                             runtime=experiment.runtime,
                             resources=runtime_resources,
                             stream=True,
@@ -261,9 +231,7 @@ def prepare_and_execute(
                             display_name=run_name,
                             environment_variables=env_vars,
                             column_mapping=column_mapping,
-                            tags={} if not build_id else {
-                                "build_id": build_id
-                                },
+                            tags={} if not build_id else {"build_id": build_id},
                             runtime=experiment.runtime,
                             resources=runtime_resources,
                             init=params_dict,
@@ -295,9 +263,7 @@ def prepare_and_execute(
                     ]
                     start_index = variant_id.find("{") + 1
                     end_index = variant_id.find("}")
-                    variant_value = (
-                        variant_id[start_index:end_index].split(".")
-                    )
+                    variant_value = variant_id[start_index:end_index].split(".")
                     print(data_id)
                     df_result[variant_value[0]] = variant_value[1]
                     metric_variant[variant_value[0]] = variant_value[1]
@@ -328,18 +294,12 @@ def prepare_and_execute(
             combined_results_df["exp_run"] = flow_run
             combined_metrics_df["exp_run"] = flow_run
 
-            combined_results_df.to_csv(
-                f"{report_dir}/{run_dataset.name}_result.csv"
-                )
-            combined_metrics_df.to_csv(
-                f"{report_dir}/{run_dataset.name}_metrics.csv"
-                )
+            combined_results_df.to_csv(f"{report_dir}/{run_dataset.name}_result.csv")
+            combined_metrics_df.to_csv(f"{report_dir}/{run_dataset.name}_metrics.csv")
 
             styled_df = combined_results_df.to_html(index=False)
 
-            with open(
-                f"{report_dir}/{run_dataset.name}_result.html", "w"
-            ) as c_results:
+            with open(f"{report_dir}/{run_dataset.name}_result.html", "w") as c_results:
                 c_results.write(styled_df)
 
             html_table_metrics = combined_metrics_df.to_html(index=False)
@@ -356,83 +316,60 @@ def prepare_and_execute(
 
             service_module = None
             for file in os.listdir(service_path):
-                if (
-                    file.endswith('.py') and
-                    file.lower().startswith('eval_')
-                ):
+                if file.endswith(".py") and file.lower().startswith("eval_"):
                     module_name = file[:-3]
-                    flow_components = service_path.split('/')
-                    flow_formatted = '.'.join(flow_components)
-                    module_path = (
-                        f'{flow_formatted}.'
-                        f'{module_name}'
-                    )
+                    flow_components = service_path.split("/")
+                    flow_formatted = ".".join(flow_components)
+                    module_path = f"{flow_formatted}." f"{module_name}"
                     import sys
+
                     dependent_modules_dir = os.path.join(
                         experiment.base_path, experiment.flow
-                        )
+                    )
                     sys.path.append(dependent_modules_dir)
 
-                    service_module = importlib.import_module(
-                        module_path
-                        )
+                    service_module = importlib.import_module(module_path)
 
                     module_names = dir(service_module)
 
                     # Filter names to get functions defined in module
                     function_names = [
-                        name for name in module_names
-                        if inspect.isfunction
-                        (
-                            getattr(
-                                service_module,
-                                name
-                                )
-                            )
-                        ]
+                        name
+                        for name in module_names
+                        if inspect.isfunction(getattr(service_module, name))
+                    ]
 
                     for function_name in function_names:
-                        if (
-                            function_name.lower().startswith('eval_')
-                        ):
-                            service_function = getattr(
-                                service_module,
-                                function_name
-                                )
+                        if function_name.lower().startswith("eval_"):
+                            service_function = getattr(service_module, function_name)
                             for ds in evaluator.datasets:
                                 timestamp = datetime.datetime.now().strftime(
                                     "%Y%m%d_%H%M%S"
-                                    )
+                                )
                                 if EXECUTION_TYPE == "LOCAL":
                                     result = service_function(
                                         f"{experiment_name}_eval_{timestamp}",
                                         os.path.join(
-                                            experiment.base_path,
-                                            ds.dataset.source
+                                            experiment.base_path, ds.dataset.source
                                         ),
                                         ds.mappings,
-                                        f"{report_dir}/"
+                                        f"{report_dir}/",
                                     )
                                 else:
                                     result = service_function(
                                         f"{experiment_name}_eval_{timestamp}",
                                         os.path.join(
-                                            experiment.base_path,
-                                            ds.dataset.source
+                                            experiment.base_path, ds.dataset.source
                                         ),
                                         ds.mappings,
                                         f"{report_dir}/",
                                         {
-                                            "subscription_id": (
-                                                config.subscription_id
-                                            ),
+                                            "subscription_id": (config.subscription_id),
                                             "resource_group_name": (
                                                 config.resource_group_name
                                             ),
-                                            "project_name": (
-                                                config.workspace_name
-                                            ),
-                                        }
+                                            "project_name": (config.workspace_name),
+                                        },
                                     )
 
                                 print(result)
@@ -448,15 +385,11 @@ def prepare_and_execute(
         final_metrics_df.to_csv(f"{report_dir}/{experiment_name}_metrics.csv")
 
         styled_df = final_results_df.to_html(index=False)
-        with open(
-            f"{report_dir}/{experiment_name}_result.html", "w"
-        ) as f_results:
+        with open(f"{report_dir}/{experiment_name}_result.html", "w") as f_results:
             f_results.write(styled_df)
 
         html_table_metrics = final_metrics_df.to_html(index=False)
-        with open(
-            f"{report_dir}/{experiment_name}_metrics.html", "w"
-        ) as f_metrics:
+        with open(f"{report_dir}/{experiment_name}_metrics.html", "w") as f_metrics:
             f_metrics.write(html_table_metrics)
 
 
