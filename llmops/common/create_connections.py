@@ -73,6 +73,9 @@ def create_pf_connections(exp_filename, base_path, env_name):
                     property_value,
                 ) in connection_details.connection_properties.items():
                     if property_name.lower() != "connection_type":
+                        print(
+                            f"Looking for Property Name: {property_name} for {connection_details.name}"
+                        )
                         connection_properties[property_name] = (
                             _get_valid_connection_values(
                                 connection_details.name, str(property_value)
@@ -98,7 +101,7 @@ def _get_valid_connection_values(con_name, con_property):
 
     if con_property.startswith("${") and con_property.endswith("}"):
         con_property = con_property.replace("${", "").replace("}", "")
-
+        print(f"Looking for - {con_name.upper()}_{con_property.upper()}")
         env_var_value = os.environ.get(f"{con_name}_{con_property}".upper())
         if env_var_value:
             return env_var_value
