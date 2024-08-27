@@ -107,7 +107,7 @@ def _get_valid_connection_values(con_name, con_property):
             return env_var_value
         else:
             raise ValueError(
-                f"Looking for - {con_name.upper()}_{con_property.upper()} but Environment variable {con_name}_{con_property} not found"
+                f"Environment variable {con_name}_{con_property} not found"
             )
     else:
         return con_property
