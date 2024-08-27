@@ -39,7 +39,7 @@ jobs:
       - name: Configure Azure ML Agent
         uses: ./.github/actions/configure_azureml_agent
         with:
-          versionSpec: "3.9"
+          versionSpec: "3.12"
           base_path: ${{ inputs.use_case_base_path }}
 
       - name: load the current Azure subscription details

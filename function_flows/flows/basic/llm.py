@@ -20,7 +20,7 @@ def get_client():
         from openai import AzureOpenAI
 
         return AzureOpenAI(
-            api_version=os.environ.get("OPENAI_API_VERSION", "2023-07-01-preview")
+            api_version=os.environ.get("OPENAI_API_VERSION", "2024-05-13")
         )
 
 

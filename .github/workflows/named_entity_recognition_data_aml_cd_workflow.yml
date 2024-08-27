@@ -61,7 +61,7 @@ jobs:
       - name: Set up python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.9
+          python-version: 3.12
 
       - name: Azure login
         uses: azure/login@v1
@@ -71,7 +71,7 @@ jobs:
       - name: Configure Azure ML Agent
         uses: ./.github/actions/configure_azureml_agent
         with:
-          versionSpec: "3.9"
+          versionSpec: "3.12"
           base_path: ${{ inputs.config_path_root_dir }}
 
       - name: Load the current Azure subscription details

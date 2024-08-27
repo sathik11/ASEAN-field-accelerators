@@ -15,9 +15,9 @@ init:
   model_config:
     type: AzureOpenAIModelConfiguration
     default:
-      azure_endpoint: https://demoopenaiexamples.openai.azure.com/
+      azure_endpoint: https://ai-ssattirajullmopshub370967103220.openai.azure.com/
       azure_deployment: gpt-35-turbo
-      api_version: 2023-07-01-preview
+      api_version: 2024-05-13
       api_key: ${api_key}
   max_total_token:
     type: int
