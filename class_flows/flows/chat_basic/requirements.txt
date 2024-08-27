@@ -1,3 +1,4 @@
 promptflow-azure
 promptflow[azureml-serving]
 promptflow-tools
+uvicorn
