@@ -93,8 +93,8 @@ def create_pf_connections(exp_filename, base_path, env_name):
 def _get_valid_connection_values(con_name, con_property):
     """Get valid connection values."""
     # Print all environment variables
-    for key, value in os.environ.items():
-        print(f"{key}: {value}")
+    # for key, value in os.environ.items():
+    #     print(f"{key}: {value}")
 
     if con_property.startswith("${") and con_property.endswith("}"):
         con_property = con_property.replace("${", "").replace("}", "")
