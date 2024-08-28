@@ -5,10 +5,16 @@ inputs:
   question:
     type: string
     default: AIA health insurance https://aia.com.sg/
+  test:
+    type: bool
+    default: true
 outputs:
   answer:
     type: string
     reference: ${summarize_pdf_content.output}
+  test_answer:
+    type: string
+    reference: ${python_node_la5g.output}
 nodes:
 - name: fetch_urls_from_input
   type: python
@@ -18,6 +24,9 @@ nodes:
   inputs:
     query: ${inputs.question}
     bingConnection: realtime_api_search
+  activate:
+    when: ${inputs.test}
+    is: false
 - name: summarize_pdf_content
   type: python
   source:
@@ -27,3 +36,16 @@ nodes:
     aoaiConnection: aoai
     pdf_local_file_paths: ${fetch_urls_from_input.output.local_pdf_urls}
     pdf_remote_file_paths: ${fetch_urls_from_input.output.remote_pdf_urls}
+  activate:
+    when: ${inputs.test}
+    is: false
+- name: python_node_la5g
+  type: python
+  source:
+    type: code
+    path: python_node_la5g.py
+  inputs:
+    input1: ${inputs.question}
+  activate:
+    when: ${inputs.test}
+    is: true
