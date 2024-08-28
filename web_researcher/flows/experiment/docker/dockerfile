@@ -1,20 +1,18 @@
 # FROM mcr.microsoft.com/azureml/promptflow/promptflow-runtime:latest
 # COPY ./requirements.txt .
 # RUN pip install -r requirements.txt
-FROM docker.io/continuumio/miniconda3:latest
+# Choose different python base image
+FROM python:3.11
 
-WORKDIR /
+# Install promptflow related package
+RUN pip install promptflow_tracing
+RUN pip install promptflow_core[executor-service,azureml-serving]
+RUN pip install promptflow_devkit
+RUN pip install promptflow
 
-COPY ./requirements.txt .
+# Set port
+USER root:root
+ENV PORT 8000
+EXPOSE $PORT
 
-RUN apt-get update && apt-get install -y runit gcc
-
-# create conda environment
-RUN conda create -n promptflow-serve python=3.11.9 pip=24.2 -q -y && \
-    conda run -n promptflow-serve \
-    pip install -r requirements.txt && \
-    conda run -n promptflow-serve pip install keyrings.alt && \
-    conda run -n promptflow-serve pip install gunicorn==20.1.0 && \
-    conda run -n promptflow-serve pip install uvicorn && \
-    conda run -n promptflow-serve pip cache purge && \
-    conda clean -a -y
+CMD ["pfapp"]
