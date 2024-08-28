@@ -5,7 +5,7 @@ description: Prepares build environment for python and prompt flow related workf
 inputs:
   versionSpec:
     description: "The Python version to use in the environment."
-    default: "3.12"
+    default: "3.11"
   base_path:
     description: "path to the base directory of the flow"
     required: true
@@ -41,7 +41,7 @@ runs:
         }
         python -m pip install --upgrade pip
         python -m pip install -r .github/requirements/execute_job_requirements.txt
-        
+
         process_requirements "${{ inputs.base_path }}"
 
         az version

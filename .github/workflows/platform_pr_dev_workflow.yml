@@ -46,7 +46,7 @@ jobs:
       - name: Configure Azure ML Agent
         uses: ./.github/actions/configure_azureml_agent
         with:
-          versionSpec: "3.12"
+          versionSpec: "3.11"
           base_path: ${{ inputs.use_case_base_path }}
       - name: Create .env file
         run: |
