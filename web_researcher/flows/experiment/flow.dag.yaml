@@ -1,0 +1,29 @@
+$schema: https://azuremlschemas.azureedge.net/promptflow/latest/Flow.schema.json
+environment:
+  python_requirements_txt: requirements.txt
+inputs:
+  question:
+    type: string
+    default: AIA health insurance https://aia.com.sg/
+outputs:
+  answer:
+    type: string
+    reference: ${summarize_pdf_content.output}
+nodes:
+- name: fetch_urls_from_input
+  type: python
+  source:
+    type: code
+    path: fetch_text_content_from_url.py
+  inputs:
+    query: ${inputs.question}
+    bingConnection: realtime_api_search
+- name: summarize_pdf_content
+  type: python
+  source:
+    type: code
+    path: summarize_pdf_content.py
+  inputs:
+    aoaiConnection: aoai
+    pdf_local_file_paths: ${fetch_urls_from_input.output.local_pdf_urls}
+    pdf_remote_file_paths: ${fetch_urls_from_input.output.remote_pdf_urls}

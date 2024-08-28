@@ -1,0 +1,49 @@
+name: web_researcher
+flow: flows/experiment
+
+connections:
+  - name: aoai
+    connection_type: AzureOpenAIConnection
+    api_base: https://ss-cchat-sf-ai-aiservices7wx5mg43sbnl4.openai.azure.com/
+    api_version: 2024-02-15-preview
+    api_key: ${api_key}
+    api_type: azure
+  - name: realtime_api_search
+    connection_type: CustomConnection
+    configs:
+      endpoint: "https://api.bing.microsoft.com/v7.0/search"
+    secrets:
+      key: ${key}
+datasets:
+  - name: web_researcher_train
+    source: data/data.jsonl
+    description: "This dataset is for prompt experiments."
+    mappings:
+      question: "${data.question}"
+  - name: web_researcher_train_new
+    source: data/data_new.jsonl
+    description: "This dataset is for prompt experiments."
+    mappings:
+      question: "${data.question}"
+
+evaluators:
+  - name: web_researcher_flow
+    flow: flows/evaluation
+    datasets:
+      - name: web_researcher_train_eval
+        reference: web_researcher_train
+        source: data/eval_data.jsonl
+        description: "This dataset is for evaluating flows."
+        mappings:
+          groundtruth: "${data.answer1}"
+          prediction: "${run.outputs.answer}"
+  # - name: web_researcher_flow_adv
+  #   flow: flows/evaluation_adv
+  #   datasets:
+  #     - name: web_researcher_train_new_eval
+  #       reference: web_researcher_train_new
+  #       source: data/eval_data_new.jsonl
+  #       description: "This dataset is for evaluating flows."
+  #       mappings:
+  #         groundtruth: "${data.answer}"
+  #         prediction: "${run.outputs.category}"
