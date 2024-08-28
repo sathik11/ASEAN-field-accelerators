@@ -1,18 +1,11 @@
-# FROM mcr.microsoft.com/azureml/promptflow/promptflow-runtime:latest
-# COPY ./requirements.txt .
-# RUN pip install -r requirements.txt
-# Choose different python base image
-FROM python:3.11
-
-# Install promptflow related package
-RUN pip install promptflow_tracing
-RUN pip install promptflow_core[executor-service,azureml-serving]
-RUN pip install promptflow_devkit
-RUN pip install promptflow
-
-# Set port
-USER root:root
-ENV PORT 8000
-EXPOSE $PORT
-
-CMD ["pfapp"]
+FROM mcr.microsoft.com/azureml/promptflow/promptflow-runtime:latest
+# Update to Python 3.11
+RUN conda install -y 'python=3.11' -p /azureml-envs/prompt-flow/runtime && \
+  pip install --no-cache-dir -r extra_requirements.txt
+# Copy Python 3.9 promptflow-runtime whl to 3.11
+RUN cp -a azureml-envs/prompt-flow/runtime/lib/python3.9/site-packages/promptflow/runtime azureml-envs/prompt-flow/runtime/lib/python3.11/site-packages/promptflow/ && \
+  sed -i -e 's|bin/python3.9|bin/python3.11|' /azureml-envs/prompt-flow/runtime/bin/prt && \
+  grep ^Requires-Dist azureml-envs/prompt-flow/runtime/lib/python3.9/site-packages/promptflow_runtime-*.dist-info/METADATA | cut -d' ' -f2- | cut -d';' -f1 > promptflow-runtime-requirements.txt && \
+  pip install --no-cache-dir -r promptflow-runtime-requirements.txt
+COPY ./requirements.txt .
+RUN pip install -r requirements.txt
