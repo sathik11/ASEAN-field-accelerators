@@ -1,9 +1,11 @@
 $schema: https://azuremlschemas.azureedge.net/promptflow/latest/Flow.schema.json
+environment:
+  python_requirements_txt: requirements.txt
 inputs:
   groundtruth:
     type: string
-    description: Please specify the groundtruth column, which contains the true label
-      to the outputs that your flow produces.
+    description: Please specify the groundtruth column, which contains the true
+      label to the outputs that your flow produces.
     default: APP
   prediction:
     type: string
@@ -31,5 +33,3 @@ nodes:
   inputs:
     grades: ${grade.output}
   aggregation: true
-environment:
-    python_requirements_txt: requirements.txt

@@ -31,7 +31,7 @@ from azure.ai.ml.entities import (
     OnlineRequestSettings,
     BuildContext,
     DataCollector,
-    DeploymentCollection
+    DeploymentCollection,
 )
 from azure.identity import DefaultAzureCredential
 from azure.ai.ml.entities._deployment.resource_requirements_settings import (
@@ -65,9 +65,7 @@ def create_kubernetes_deployment(
     subscription_id: Optional[str] = None,
 ):
     """Create deployment for the model version."""
-    config = ExperimentCloudConfig(
-        subscription_id=subscription_id, env_name=env_name
-    )
+    config = ExperimentCloudConfig(subscription_id=subscription_id, env_name=env_name)
     experiment = load_experiment(
         filename=exp_filename, base_path=base_path, env=config.environment_name
     )
@@ -77,19 +75,19 @@ def create_kubernetes_deployment(
     found_flex = False
     flow_type = FlowTypeOption.CLASS_FLOW
     for root, dirs, files in os.walk(
-            os.path.join(experiment.base_path, experiment.flow)
-            ):
+        os.path.join(experiment.base_path, experiment.flow)
+    ):
         for file in files:
             if file in _FLOW_FLEX_FILENAME:
                 found_flex = True
                 flow_type = FlowTypeOption.CLASS_FLOW
                 flow_file_path = os.path.abspath(
                     os.path.join(experiment.base_path, experiment.flow, file)
-                    )
+                )
             elif file in _FLOW_DAG_FILENAME:
                 flow_file_path = os.path.abspath(
                     os.path.join(experiment.base_path, experiment.flow, file)
-                    )
+                )
                 flow_type = FlowTypeOption.DAG_FLOW
 
     params_dict = {}
@@ -99,9 +97,9 @@ def create_kubernetes_deployment(
                 "python",
                 "llmops/common/deployment/generate_config.py",
                 flow_file_path,
-                "false"
+                "false",
             ],
-            stdout=subprocess.PIPE
+            stdout=subprocess.PIPE,
         )
         output = result.stdout.decode("utf-8")
         substrings = output.split()
@@ -143,7 +141,7 @@ def create_kubernetes_deployment(
                         ),
                         "model_outputs": DeploymentCollection(
                             enabled="true",
-                        )
+                        ),
                     },
                     sampling_rate=1,
                 )
@@ -164,13 +162,8 @@ def create_kubernetes_deployment(
                 deployment_desc = elem["DEPLOYMENT_DESC"]
                 environment_variables = dict(elem["ENVIRONMENT_VARIABLES"])
 
-                if os.environ.get(
-                    "APPLICATIONINSIGHTS_CONNECTION_STRING",
-                    None
-                ):
-                    environment_variables[
-                        "APPLICATIONINSIGHTS_CONNECTION_STRING"
-                    ] = (
+                if os.environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING", None):
+                    environment_variables["APPLICATIONINSIGHTS_CONNECTION_STRING"] = (
                         os.environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING")
                     )
 
@@ -183,6 +176,7 @@ def create_kubernetes_deployment(
                 environment_variables["PROMPTFLOW_RUN_MODE"] = "serving"
                 environment_variables["PROMPTFLOW_SERVING_ENGINE"] = "fastapi"
                 environment_variables["F_LOGGING_LEVEL"] = "WARNING"
+                environment_variables["PF_ENABLE_MULTI_CONTAINER"] = "true"
                 environment_variables["PRT_CONFIG_OVERRIDE"] = (
                     f"deployment.subscription_id={config.subscription_id},"
                     f"deployment.resource_group={config.resource_group_name},"
@@ -212,9 +206,7 @@ def create_kubernetes_deployment(
                 deploy_count = sum(1 for _ in deployments)
 
                 if deploy_count >= 1:
-                    traffic_allocation[deployment_name] = (
-                        deployment_traffic_allocation
-                    )
+                    traffic_allocation[deployment_name] = deployment_traffic_allocation
                     traffic_allocation[prior_deployment_name] = 100 - int(
                         deployment_traffic_allocation
                     )
@@ -248,9 +240,7 @@ def create_kubernetes_deployment(
                     blue_deployment
                 ).result()
 
-                endpoint = ml_client.online_endpoints.get(
-                    endpoint_name, local=False
-                )
+                endpoint = ml_client.online_endpoints.get(endpoint_name, local=False)
                 endpoint.traffic = traffic_allocation
                 ml_client.begin_create_or_update(endpoint).result()
 
