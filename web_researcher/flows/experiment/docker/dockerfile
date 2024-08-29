@@ -23,7 +23,7 @@ RUN apt-get update && apt-get install -y runit procps \
 RUN pip install -U promptflow-python-bundle
 
 # Install promptflow to ensure forward compatibility. It will be phased out in the future.
-RUN pip install promptflow
+RUN pip install promptflow PyPDF2 semantic-kernel>=1.8.0
 
 # Set port
 ENV PORT 8000

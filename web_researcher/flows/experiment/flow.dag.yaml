@@ -1,6 +1,7 @@
 $schema: https://azuremlschemas.azureedge.net/promptflow/latest/Flow.schema.json
 environment:
   python_requirements_txt: requirements.txt
+  image: acrcontoso7wx5mg43sbnl4.azurecr.io/ssattirajutest:latest
 inputs:
   question:
     type: string
@@ -16,36 +17,36 @@ outputs:
     type: string
     reference: ${python_node_la5g.output}
 nodes:
-- name: fetch_urls_from_input
-  type: python
-  source:
-    type: code
-    path: fetch_text_content_from_url.py
-  inputs:
-    query: ${inputs.question}
-    bingConnection: realtime_api_search
-  activate:
-    when: ${inputs.test}
-    is: false
-- name: summarize_pdf_content
-  type: python
-  source:
-    type: code
-    path: summarize_pdf_content.py
-  inputs:
-    aoaiConnection: aoai
-    pdf_local_file_paths: ${fetch_urls_from_input.output.local_pdf_urls}
-    pdf_remote_file_paths: ${fetch_urls_from_input.output.remote_pdf_urls}
-  activate:
-    when: ${inputs.test}
-    is: false
-- name: python_node_la5g
-  type: python
-  source:
-    type: code
-    path: python_node_la5g.py
-  inputs:
-    input1: ${inputs.question}
-  activate:
-    when: ${inputs.test}
-    is: true
+  - name: fetch_urls_from_input
+    type: python
+    source:
+      type: code
+      path: fetch_text_content_from_url.py
+    inputs:
+      query: ${inputs.question}
+      bingConnection: realtime_api_search
+    activate:
+      when: ${inputs.test}
+      is: false
+  - name: summarize_pdf_content
+    type: python
+    source:
+      type: code
+      path: summarize_pdf_content.py
+    inputs:
+      aoaiConnection: aoai
+      pdf_local_file_paths: ${fetch_urls_from_input.output.local_pdf_urls}
+      pdf_remote_file_paths: ${fetch_urls_from_input.output.remote_pdf_urls}
+    activate:
+      when: ${inputs.test}
+      is: false
+  - name: python_node_la5g
+    type: python
+    source:
+      type: code
+      path: python_node_la5g.py
+    inputs:
+      input1: ${inputs.question}
+    activate:
+      when: ${inputs.test}
+      is: true
