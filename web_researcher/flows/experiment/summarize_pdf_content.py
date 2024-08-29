@@ -9,7 +9,7 @@ from promptflow.connections import AzureOpenAIConnection
 
 sk_version = version("semantic_kernel")
 print("Semantic Kernel version:", sk_version)
-await asyncio.sleep(5)
+asyncio.sleep(5)
 from semantic_kernel.contents.chat_message_content import ChatMessageContent
 from semantic_kernel.contents.utils.author_role import AuthorRole
 from semantic_kernel.kernel import Kernel
