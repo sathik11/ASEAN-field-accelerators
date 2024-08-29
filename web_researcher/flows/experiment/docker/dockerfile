@@ -1,13 +1,31 @@
-FROM mcr.microsoft.com/azureml/promptflow/promptflow-runtime:latest
-# Update to Python 3.10
-RUN conda install -y 'python=3.10' -p /azureml-envs/prompt-flow/runtime && \
-  pip install --no-cache-dir -r extra_requirements.txt
-# Update OS packages
-RUN apt-get update && apt-get install -y runit gcc && apt-get -y upgrade
-# Copy Python 3.9 promptflow-runtime whl to 3.10
-RUN cp -a azureml-envs/prompt-flow/runtime/lib/python3.9/site-packages/promptflow/runtime azureml-envs/prompt-flow/runtime/lib/python3.10/site-packages/promptflow/ && \
-  sed -i -e 's|bin/python3.9|bin/python3.10|' /azureml-envs/prompt-flow/runtime/bin/prt && \
-  grep ^Requires-Dist azureml-envs/prompt-flow/runtime/lib/python3.9/site-packages/promptflow_runtime-*.dist-info/METADATA | cut -d' ' -f2- | cut -d';' -f1 > promptflow-runtime-requirements.txt && \
-  pip install --no-cache-dir -r promptflow-runtime-requirements.txt
-COPY ./requirements.txt .
-RUN pip install -r requirements.txt
+# FROM mcr.microsoft.com/azureml/promptflow/promptflow-runtime:latest
+# # Update to Python 3.10
+# RUN conda install -y 'python=3.10' -p /azureml-envs/prompt-flow/runtime && \
+#   pip install --no-cache-dir -r extra_requirements.txt
+# # Update OS packages
+# RUN apt-get update && apt-get install -y runit gcc && apt-get -y upgrade
+# # Copy Python 3.9 promptflow-runtime whl to 3.10
+# RUN cp -a azureml-envs/prompt-flow/runtime/lib/python3.9/site-packages/promptflow/runtime azureml-envs/prompt-flow/runtime/lib/python3.10/site-packages/promptflow/ && \
+#   sed -i -e 's|bin/python3.9|bin/python3.10|' /azureml-envs/prompt-flow/runtime/bin/prt && \
+#   grep ^Requires-Dist azureml-envs/prompt-flow/runtime/lib/python3.9/site-packages/promptflow_runtime-*.dist-info/METADATA | cut -d' ' -f2- | cut -d';' -f1 > promptflow-runtime-requirements.txt && \
+#   pip install --no-cache-dir -r promptflow-runtime-requirements.txt
+# COPY ./requirements.txt .
+# RUN pip install -r requirements.txt
+# Choose different python base image
+FROM python:3.11
+
+# Required: install runit and procps
+RUN apt-get update && apt-get install -y runit procps \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install promptflow-python-bundle
+RUN pip install -U promptflow-python-bundle
+
+# Install promptflow to ensure forward compatibility. It will be phased out in the future.
+RUN pip install promptflow promptflow-azure>=1.12.0 promptflow-tools uvicorn tenacity PyPDF2 semantic-kernel>=1.8.0
+
+# Set port
+ENV PORT 8000
+EXPOSE $PORT
+CMD ["pfapp"]
