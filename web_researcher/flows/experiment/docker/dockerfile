@@ -23,7 +23,7 @@ RUN apt-get update && apt-get install -y runit procps \
 RUN pip install -U promptflow-python-bundle
 
 # Install promptflow to ensure forward compatibility. It will be phased out in the future.
-RUN pip install promptflow promptflow-azure promptflow-tools PyPDF2 semantic-kernel>=1.8.0 aiohttp tenacity uvicorn
+RUN pip install promptflow promptflow-azure promptflow-tools PyPDF2 semantic-kernel>=1.8.0 aiohttp tenacity uvicorn nest_asyncio
 
 # Set port
 ENV PORT 8000

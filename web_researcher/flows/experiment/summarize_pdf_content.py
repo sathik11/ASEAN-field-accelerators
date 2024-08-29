@@ -1,26 +1,17 @@
 import asyncio
-import nest_asyncio
 
-nest_asyncio.apply()
+# import nest_asyncio
+
+# nest_asyncio.apply()
 import os
-from importlib.metadata import version
+
+# from importlib.metadata import version
 from promptflow.core import tool
 from promptflow.connections import AzureOpenAIConnection
-
-sk_version = version("semantic_kernel")
-print("Semantic Kernel version:", sk_version)
-asyncio.sleep(5)
 from semantic_kernel.contents.chat_message_content import ChatMessageContent
 from semantic_kernel.contents.utils.author_role import AuthorRole
 from semantic_kernel.kernel import Kernel
 from semantic_kernel.agents.open_ai.azure_assistant_agent import AzureAssistantAgent
-
-# else:
-#     from semantic_kernel.contents import ChatMessageContent
-#     from semantic_kernel.contents import AuthorRole
-#     from semantic_kernel.kernel import Kernel
-#     from semantic_kernel.agents import AzureAssistantAgent
-# import nest_asyncio
 
 # nest_asyncio.apply()  # Required for Jupyter Notebooks asyncio.run() cannot be called from a running event loop
 
