@@ -12,7 +12,7 @@
 # COPY ./requirements.txt .
 # RUN pip install -r requirements.txt
 # Choose different python base image
-FROM python:3.11
+FROM python:3.10
 
 # Required: install runit and procps
 RUN apt-get update && apt-get install -y runit procps \
