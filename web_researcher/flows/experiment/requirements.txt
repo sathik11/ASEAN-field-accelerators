@@ -4,4 +4,4 @@ promptflow-tools
 uvicorn
 tenacity
 PyPDF2
-semantic-kernel>=1.8.0
+tldextract

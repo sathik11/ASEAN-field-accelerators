@@ -139,7 +139,7 @@ async def assistant_file_search(
 
     # Ensure the process task is completed
     await process_task
-
+    print("Finished processing the files.")
     yield {
         "status": "success",
         "thread_id": thread_id,

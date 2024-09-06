@@ -5,48 +5,22 @@ environment:
 inputs:
   question:
     type: string
-    default: AIA health insurance https://aia.com.sg/
+    default: Search for AI research at https://openai.com
   test:
     type: bool
     default: true
 outputs:
   answer:
     type: string
-    reference: ${summarize_pdf_content.output}
-  test_answer:
-    type: string
-    reference: ${python_node_la5g.output}
+    reference: ${pdf_research_assistant.output}
 nodes:
-  - name: fetch_urls_from_input
-    type: python
-    source:
-      type: code
-      path: fetch_text_content_from_url.py
-    inputs:
-      query: ${inputs.question}
-      bingConnection: realtime_api_search
-    activate:
-      when: ${inputs.test}
-      is: false
-  - name: summarize_pdf_content
-    type: python
-    source:
-      type: code
-      path: summarize_pdf_content.py
-    inputs:
-      aoaiConnection: aoai
-      pdf_local_file_paths: ${fetch_urls_from_input.output.local_pdf_urls}
-      pdf_remote_file_paths: ${fetch_urls_from_input.output.remote_pdf_urls}
-    activate:
-      when: ${inputs.test}
-      is: false
-  - name: python_node_la5g
-    type: python
-    source:
-      type: code
-      path: python_node_la5g.py
-    inputs:
-      input1: ${inputs.question}
-    activate:
-      when: ${inputs.test}
-      is: true
+- name: pdf_research_assistant
+  type: python
+  source:
+    type: code
+    path: pdf_research_assistant.py
+  inputs:
+    question: ${inputs.question}
+    realtime_api_search: realtime_api_search
+    aoaiConnection: aoai
+    test: ${inputs.test}
