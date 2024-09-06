@@ -5,10 +5,10 @@ environment:
 inputs:
   question:
     type: string
-    default: Search for AI research at https://openai.com
+    default: health insurance https://aia.com.sg
   test:
     type: bool
-    default: true
+    default: false
 outputs:
   answer:
     type: string
