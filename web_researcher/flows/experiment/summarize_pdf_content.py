@@ -1,10 +1,5 @@
 import asyncio
-
-# import nest_asyncio
-
-# nest_asyncio.apply()
 import os
-
 # from importlib.metadata import version
 from promptflow.core import tool
 from promptflow.connections import AzureOpenAIConnection
@@ -13,8 +8,7 @@ from semantic_kernel.contents.utils.author_role import AuthorRole
 from semantic_kernel.kernel import Kernel
 from semantic_kernel.agents.open_ai.azure_assistant_agent import AzureAssistantAgent
 
-# nest_asyncio.apply()  # Required for Jupyter Notebooks asyncio.run() cannot be called from a running event loop
-
+# Define the agent name and instructions
 AGENT_NAME = "FileSearch"
 AGENT_INSTRUCTIONS = "Find answers to the user's questions in the provided file."
 
