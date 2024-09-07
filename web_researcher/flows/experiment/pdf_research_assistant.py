@@ -51,7 +51,10 @@ async def extract_domain_and_query(query: str):
 @trace
 @retry(wait=wait_random_exponential(min=1, max=60), stop=stop_after_attempt(6))
 async def search_bing_return_pdf_links(
-    session: aiohttp.ClientSession, query_params: dict, bingConnection: CustomConnection
+    session: aiohttp.ClientSession,
+    query_params: dict,
+    bingConnection: CustomConnection,
+    file_type="pdf",
 ) -> list[str]:
     BING_API_KEY = bingConnection.secrets["key"]
     headers = {"Ocp-Apim-Subscription-Key": BING_API_KEY}
@@ -65,7 +68,7 @@ async def search_bing_return_pdf_links(
     async with session.get(
         url="https://api.bing.microsoft.com/v7.0/search",
         params={
-            "q": f"site:{domain} filetype:pdf {query_text}",
+            "q": f"site:{domain} filetype:{file_type} {query_text}",
             "count": query_params.get("count", 10),
         },
         headers=headers,
@@ -92,35 +95,53 @@ async def download_pdf(session, url):
         return None
 
 
+async def get_or_create_assistant(
+    client: AzureOpenAI,
+    name: str,
+    description: str,
+    instructions: str,
+    model: str,
+    tools: list[dict],
+):
+    # List existing assistants
+    existing_assistants = client.beta.assistants.list()
+
+    # Check if an assistant with the given name already exists
+    for assistant in existing_assistants:
+        if assistant.name == name:
+            logging.info(
+                f"Assistant with name '{name}' already exists. Returning the existing assistant. NOTE: We are not updating the assistant. If you see any issues, please delete the assistant and run the flow again."
+            )
+            return assistant
+    # TODO: If the assistant already exists, we can update the instructions and tools
+    # Create a new assistant if it does not exist
+    new_assistant = client.beta.assistants.create(
+        name=name,
+        description=description,
+        instructions=instructions,
+        model=model,
+        tools=tools,
+    )
+    logging.info(f"Created new assistant with name '{name}'.")
+    return new_assistant
+
+
 @trace
 async def process_file_with_assistant(
+    client: AzureOpenAI,
     file_path: str,
     vector_store_id: str,
     aoaiConnection: AzureOpenAIConnection,
     mesg_queue: asyncio.Queue,
 ):
-    client = AzureOpenAI(
-        api_key=aoaiConnection.secrets["api_key"],
-        api_version="2024-05-01-preview",
-        azure_endpoint=aoaiConnection.configs["api_base"],
-    )
-
+    # This call is required to send the assistant response to the user via the message queue
     class EventHandler(AssistantEventHandler):
         @override
         def on_text_created(self, text) -> None:
-            mesg_queue.put_nowait(
-                Message(status=StatusEnum.success, message=text.value).model_dump_json()
-            )
+            # mesg_queue.put_nowait(
+            #     Message(status=StatusEnum.success, message=text.value).model_dump_json()
+            # ) # This is not needed as the final message is already being sent in the on_message_done method, but we can still log the assistant response
             logging.info(f"Assistant Response: {text.value}")
-
-        # @override
-        # def on_text_delta(self, delta, snapshot):
-        #     mesg_queue.put_nowait(
-        #         Message(
-        #             status=StatusEnum.success, message=delta.value
-        #         ).model_dump_json()
-        #     )
-        #     logging.info(f"Assistant Delta: {delta.value}")
 
         def on_tool_call_created(self, tool_call):
             mesg_queue.put_nowait(
@@ -141,19 +162,21 @@ async def process_file_with_assistant(
             )
 
     try:
-        assistant = client.beta.assistants.create(
-            name="pdf-assistant",
-            description=f"Assistant that summarizes the PDF file: {os.path.basename(file_path)}",
-            instructions="Summarize the content of the file in the vector store. Do not write code.",
+        assistant = await get_or_create_assistant(
+            client=client,
+            name="Web_Research_Assistant",
+            description=f"Assistant that answers questions based on the files in the vector store",
+            instructions="You are helpful AI assistant that can help summarize the files in less than 100 words. You have access to the file search tool.",
             model="gpt-4o",
-            tool_resources={"file_search": {"vector_store_ids": [vector_store_id]}},
+            tools=[{"type": "file_search"}],
+            # tool_resources={"file_search": {"vector_store_ids": [vector_store_id]}}, # This is not needed as we are passing the vector store id in the thread creation, but we need to still pass the tool in the assistant creation
         )
 
         thread = client.beta.threads.create(
             messages=[
                 {
                     "role": "user",
-                    "content": f"Summarize the file: {os.path.basename(file_path)}",
+                    "content": f"summarise each file one by one in less than 100 words. Please include the file name at the beginning in each file summary in markdown format.",
                 }
             ],
             tool_resources={"file_search": {"vector_store_ids": [vector_store_id]}},
@@ -162,11 +185,20 @@ async def process_file_with_assistant(
         with client.beta.threads.runs.stream(
             thread_id=thread.id,
             assistant_id=assistant.id,
-            instructions=f"Summarize the file: {os.path.basename(file_path)}",
+            instructions=f"summarise each file one by one in less than 100 words. Please include the file name at the beginning in each file summary in markdown format.",
             event_handler=EventHandler(),
         ) as stream:
             # We have event handlers to process the messages from the assistant
             stream.until_done()
+
+        # TODO: Test with create_and_run_thread_stream method
+        # with client.beta.threads.create_and_run_stream(
+        #     thread_id=thread.id,
+        #     assistant_id=assistant.id,
+        #     instructions=f"summarise each file one by one in less than 100 words. Please include the file name at the beginning in each file summary in markdown format.",
+        #     event_handler=EventHandler(),
+        # ) as stream:
+        #     stream.until_done()
 
         mesg_queue.put_nowait(
             Message(
@@ -188,17 +220,18 @@ async def process_file_with_assistant(
     finally:
         if os.path.exists(file_path):
             os.remove(file_path)
+        client.beta.threads.delete(
+            thread.id
+        )  # Clean up: Delete the thread after processing
 
 
 @trace
 async def add_to_oai_assistant(
-    files: list, aoaiConnection: AzureOpenAIConnection, mesg_queue: asyncio.Queue
+    client: AzureOpenAI,
+    files: list,
+    aoaiConnection: AzureOpenAIConnection,
+    mesg_queue: asyncio.Queue,
 ):
-    client = AzureOpenAI(
-        api_key=aoaiConnection.secrets["api_key"],
-        api_version="2024-05-01-preview",
-        azure_endpoint=aoaiConnection.configs["api_base"],
-    )
 
     try:
         # Create a vector store
@@ -214,7 +247,7 @@ async def add_to_oai_assistant(
         # Parallel processing of files with the assistant
         process_tasks = [
             process_file_with_assistant(
-                file, vector_store.id, aoaiConnection, mesg_queue
+                client, file, vector_store.id, aoaiConnection, mesg_queue
             )
             for file in files
         ]
@@ -235,7 +268,8 @@ async def add_to_oai_assistant(
         for stream in file_streams:
             stream.close()
         # Clean up: Delete the entire vector store after processing
-        # client.beta.vector_stores.delete(vector_store_id=vector_store.id)
+        client.beta.vector_stores.delete(vector_store_id=vector_store.id)
+        # TODO: Delete the assistant as well?
 
 
 @tool
@@ -245,15 +279,20 @@ async def my_python_tool(
     aoaiConnection: AzureOpenAIConnection,
     test: bool,
     timeout: int = 60,
+    filetype: str = "pdf",
 ):
     if test:
-        question = "site:example.com filetype:pdf " + question
+        question = f"site:example.com filetype:{filetype} {question}"
         yield Message(
             status=StatusEnum.success,
             message=f"### Test mode enabled. Using query: {question}\n",
         ).model_dump_json()
         return
-
+    client = AzureOpenAI(
+        api_key=aoaiConnection.secrets["api_key"],
+        api_version="2024-05-01-preview",
+        azure_endpoint=aoaiConnection.configs["api_base"],
+    )
     mesg_queue = asyncio.Queue()
     await mesg_queue.put(
         Message(
@@ -265,22 +304,25 @@ async def my_python_tool(
 
     async with aiohttp.ClientSession() as session:
         pdf_urls = await search_bing_return_pdf_links(
-            session, search_params, realtime_api_search
+            session, search_params, realtime_api_search, filetype
         )
 
         download_tasks = [download_pdf(session, url) for url in pdf_urls]
         downloaded_files = await asyncio.gather(*download_tasks)
-        downloaded_files = [file for file in downloaded_files if file]
+        downloaded_files = [
+            file for file in downloaded_files if file and file.endswith(".pdf")
+        ]  # Filter out non-pdf files
+        downloaded_files_list = "\n".join([f"- {file}" for file in downloaded_files])
 
         await mesg_queue.put(
             Message(
                 status=StatusEnum.success,
-                message=f"### Downloaded files: {downloaded_files}\n",
+                message=f"### Downloaded files:\n{downloaded_files_list}\n",
             ).model_dump_json()
         )
 
     process_task = asyncio.create_task(
-        add_to_oai_assistant(downloaded_files, aoaiConnection, mesg_queue)
+        add_to_oai_assistant(client, downloaded_files, aoaiConnection, mesg_queue)
     )
 
     while True:
