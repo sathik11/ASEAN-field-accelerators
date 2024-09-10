@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Card,
@@ -6,31 +9,38 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import ChatInterface from "@/components/ChatInterface";
+import WebResearcher from "@/components/WebResearcher";
+import CampaignGenerator from "@/components/CampaignGenerator";
+import Other from "@/components/Other";
 
 export default function GenAIShowcase() {
+  const [activeTab, setActiveTab] = useState("web-researcher");
+
   const chatbots = [
     {
       id: "web-researcher",
       name: "Web Researcher",
       description: "Personal Research Assistant",
+      component: <WebResearcher />,
     },
     {
-      id: "campaing-generator",
+      id: "campaign-generator",
       name: "Campaign Generator",
-      description: "AI assistant",
+      description: "AI Marketing Assistant",
+      component: <CampaignGenerator />,
     },
     {
       id: "other",
       name: "Other",
       description: "Language Model",
+      component: <Other />,
     },
   ];
 
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-3xl font-bold mb-6">GenAI Chatbot Showcase</h1>
-      <Tabs defaultValue="gpt-3.5">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3">
           {chatbots.map((bot) => (
             <TabsTrigger key={bot.id} value={bot.id}>
@@ -45,9 +55,7 @@ export default function GenAIShowcase() {
                 <CardTitle>{bot.name}</CardTitle>
                 <CardDescription>{bot.description}</CardDescription>
               </CardHeader>
-              <CardContent>
-                <ChatInterface botId={bot.id} />
-              </CardContent>
+              <CardContent>{bot.component}</CardContent>
             </Card>
           </TabsContent>
         ))}

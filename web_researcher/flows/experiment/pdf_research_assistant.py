@@ -2,7 +2,7 @@ import asyncio
 from openai import AzureOpenAI
 from promptflow.connections import CustomConnection, AzureOpenAIConnection
 from promptflow.core import tool
-from webresearcher import WebResearcher, Message, StatusEnum
+from webresearcher import WebResearcher, Message, StepIndicator
 
 
 @tool
@@ -23,9 +23,8 @@ async def my_python_tool(
         test_query = f"site:example.com filetype:{filetype} {question}"
         await mesg_queue.put(
             Message(
-                status=StatusEnum.success,
-                message=f"Test mode enabled. Using query: {test_query}\n",
-            ).model_dump_json()
+                content=f"Test mode enabled. Using query: {test_query}\n",
+            ).model_dump_json(exclude_unset=False)
         )
 
     client = AzureOpenAI(
@@ -33,9 +32,12 @@ async def my_python_tool(
         api_version="2024-05-01-preview",
         azure_endpoint=aoaiConnection.configs["api_base"],
     )
-    await mesg_queue.put(
-        Message(status=StatusEnum.success, message="Initialising\n").model_dump_json()
-    )
+    # await mesg_queue.put(
+    #     StepIndicator(
+    #         title=f"Initialize",
+    #         content="Web Research Assistant starting to initialize..",
+    #     ).model_dump_json(exclude_unset=False)
+    # )
 
     search_params = {"q": question, "count": 5}
 
@@ -59,9 +61,10 @@ async def my_python_tool(
     await asyncio.wait_for(web_researcher_task, timeout=timeout)
 
     await mesg_queue.put(
-        Message(
-            status=StatusEnum.success, message="Finished processing the files.\n"
-        ).model_dump_json()
+        StepIndicator(
+            title="Completed",
+            content="Web Research Assistant has completed task.",
+        ).model_dump_json(exclude_unset=False)
     )
 
     # Return the list of messages to the output

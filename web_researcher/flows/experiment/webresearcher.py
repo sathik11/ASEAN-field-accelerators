@@ -17,21 +17,25 @@ from typing_extensions import override
 from urllib.parse import urlparse
 
 
-class StatusEnum(str, Enum):
-    success = "success"
-    error = "error"
-    in_progress = "in_progress"
-
-
 class Message(BaseModel):
-    status: StatusEnum
-    message: str
-    details: dict = Field(default_factory=dict)
+    type: str = "message"
+    role: str = "assistant"
+    content: str
+    status: str = "success"
+    reference: list[dict] = Field(default_factory=list)
+
+
+class StepIndicator(BaseModel):
+    type: str = "initialization"
+    title: str
+    content: str
+    files: list[dict] = Field(default_factory=list)
 
 
 class WebResearcher:
     def __init__(self, mesg_queue: asyncio.Queue):
         self.mesg_queue = mesg_queue
+        self.bing_url_links = []
 
     @trace
     async def extract_domain_and_query(self, query: str) -> tuple[str, str]:
@@ -45,6 +49,16 @@ class WebResearcher:
                 possible_url = "http://" + possible_url
             extracted_domain = tldextract.extract(possible_url)
             domain = f"{extracted_domain.domain}.{extracted_domain.suffix}"
+            print(
+                f"Creating StepIndicator with title='Extracting Domain and Query', content='Extracted domain: {domain}, query: {query_text}  for Bing Search'"
+            )
+            print("*" * 16)
+            self.mesg_queue.put_nowait(
+                StepIndicator(
+                    title="Extracting Domain and Query",
+                    content=f"Extracted domain: {domain}, query: {query_text}  for Bing Search",
+                ).model_dump_json(exclude_unset=False)
+            )
             return domain, query_text
         else:
             return None, query
@@ -81,12 +95,21 @@ class WebResearcher:
                 pdf_links = [
                     result["url"] for result in search_results["webPages"]["value"]
                 ]
-                print(f"Links of PDF files: {pdf_links}")
+                self.bing_url_links = [
+                    {"name": f"link{index + 1}", "path": url}
+                    for index, url in enumerate(pdf_links)
+                ]
+                # print(f"Links of PDF files: {pdf_links}")
+                # print(
+                #     f"Creating StepIndicator with title='Execute Bing Search Result', content='Found {len(pdf_links)} PDF files', files={files_list}"
+                # )
+                # print("*" * 16)
                 await self.mesg_queue.put(
-                    Message(
-                        status=StatusEnum.success,
-                        message=f"Downloading files - {pdf_links}\n",
-                    ).model_dump_json()
+                    StepIndicator(
+                        title="Execute Bing Search Result",
+                        content=f"Downloading {len(pdf_links)} PDF files for further processing.",
+                        files=self.bing_url_links,
+                    ).model_dump_json(exclude_unset=False)
                 )
                 return pdf_links
         except aiohttp.ClientError as e:
@@ -110,23 +133,10 @@ class WebResearcher:
                     file_path = os.path.join(temp_dir, file_name)
                     with open(file_path, "wb") as f:
                         f.write(await response.read())
-
                     print(f"Downloaded: {file_path}")
-                    await self.mesg_queue.put(
-                        Message(
-                            status=StatusEnum.success,
-                            message=f"Downloaded url {url} to tmp location:\n{file_path}\n",
-                        ).model_dump_json()
-                    )
                     return file_path
             except Exception as e:
                 logging.error(f"Error downloading {url}: {e}")
-                await self.mesg_queue.put(
-                    Message(
-                        status=StatusEnum.success,
-                        message=f"Error downloading {url}: {e}\n",
-                    ).model_dump_json()
-                )
                 return None
 
     async def get_or_create_assistant(
@@ -171,37 +181,54 @@ class WebResearcher:
 
     async def process_files_with_assistant(self, client: AzureOpenAI, files: list[str]):
         class EventHandler(AssistantEventHandler):
-            def __init__(self, mesg_queue: asyncio.Queue = self.mesg_queue):
+            def __init__(
+                self,
+                mesg_queue: asyncio.Queue = self.mesg_queue,
+                bing_url_links: list = self.bing_url_links,
+            ):
                 super().__init__()
                 self.mesg_queue = mesg_queue
+                self.bing_url_links = bing_url_links
 
             def on_tool_call_created(self, tool_call):
-                self.mesg_queue.put_nowait(
-                    Message(
-                        status=StatusEnum.success,
-                        message=f"\nassistant Tool called > {tool_call.type}\n",
-                    ).model_dump_json()
-                )
+                # print("*" * 16)
+                # print(
+                #     f"Creating Message with type='message', role='assistant', content='Assistant Tool call requested: {tool_call.type}\\n', status='success'"
+                # )
+                # self.mesg_queue.put_nowait(
+                #     Message(
+                #         type="message",
+                #         role="assistant",
+                #         content=f"Assistant Tool call requested: {tool_call.type}\n",
+                #         status="success",
+                #     ).model_dump_json(exclude_unset=False)
+                # )
                 logging.info(f"\nassistant > {tool_call.type}\n")
 
             @override
             def on_message_done(self, message) -> None:
-                print(f"Message done: {message.content}")
                 self.mesg_queue.put_nowait(
                     Message(
-                        status=StatusEnum.success, message=message.content[0].text.value
-                    ).model_dump_json()
+                        type="message",
+                        role="assistant",
+                        content=message.content[0].text.value,
+                        status="success",
+                        reference=self.bing_url_links,
+                    ).model_dump_json(exclude_unset=False)
                 )
 
         try:
             vector_store_name = f"data-{uuid.uuid4()}"
             vector_store = client.beta.vector_stores.create(name=vector_store_name)
-            await self.mesg_queue.put(
-                Message(
-                    status=StatusEnum.success,
-                    message=f"Created vector store - {vector_store_name}\n",
-                ).model_dump_json()
-            )
+            # print(
+            #     f"Creating StepIndicator with title='Setting up Asissitant API', content='Created vector store - {vector_store_name}'"
+            # )
+            # await self.mesg_queue.put(
+            #     StepIndicator(
+            #         title="Setting up Asissitant API",
+            #         content=f"Created vector store - {vector_store_name}",
+            #     ).model_dump_json(exclude_unset=False)
+            # )
             # print(f"adding files {files} to vector store {vector_store_name}")
 
             # During testing, if are calling the same query the file stream is not getting closed and hence the file is not getting added to the vector store. Hence, we are closing the file stream after the file is added to the vector store and also deleting the file from the tmp location.
@@ -215,11 +242,14 @@ class WebResearcher:
             )
             # print(f"File Batch Upload Status: {file_batch.status}")
 
+            # print(
+            #     f"Creating StepIndicator with title='Setting up Asissitant API', content='Files added to Vectore store and its Status: {file_batch.status}'"
+            # )
             await self.mesg_queue.put(
-                Message(
-                    status=StatusEnum.success,
-                    message=f"Files added to Vectore store - Status: {file_batch.status}\n",
-                ).model_dump_json()
+                StepIndicator(
+                    title="Setting up Asissitant API",
+                    content=f"Created vector store - {vector_store_name} and adding files to the vector store. Status: {file_batch.status}",
+                ).model_dump_json(exclude_unset=False)
             )
 
             assistant: Assistant = await self.get_or_create_assistant(
@@ -252,12 +282,15 @@ class WebResearcher:
                 1
             )  # Sleep for 1 second to ensure the thread is created before starting the stream. Not ideal and need to test if we actually need this.
 
-            await self.mesg_queue.put(
-                Message(
-                    status=StatusEnum.success,
-                    message=f"Creating Asisstance API thread with Vectore store for Summarisation\n",
-                ).model_dump_json()
-            )
+            # print(
+            #     f"Creating StepIndicator with title='Setting up Asissitant API', content='Creating Asisstance API thread with Vectore store for Summarisation'"
+            # )
+            # await self.mesg_queue.put(
+            #     StepIndicator(
+            #         title="Setting up Asissitant API",
+            #         content=f"Creating Asisstance API thread with Vectore store for Summarisation",
+            #     ).model_dump_json(exclude_unset=False)
+            # )
 
             # print("*" * 12)
             # print(
@@ -275,12 +308,16 @@ class WebResearcher:
 
         except Exception as e:
             logging.error(f"Error processing files: {e}")
+            print(
+                f"Creating Message with type='message', role='assistant', status='error', content='Error during processing. {str(e)}'"
+            )
             await self.mesg_queue.put(
                 Message(
-                    status=StatusEnum.error,
-                    message="Error during processing.",
-                    details={"error": str(e)},
-                ).model_dump_json()
+                    type="message",
+                    role="assistant",
+                    status="error",
+                    content=f"Error during processing. {str(e)}",
+                ).model_dump_json(exclude_unset=False)
             )
         finally:
             for stream in file_streams:
@@ -312,16 +349,20 @@ class WebResearcher:
             downloaded_files = [
                 file for file in downloaded_files if file and file.endswith(".pdf")
             ]
+            # print(
+            #     f"Creating StepIndicator with title='Download PDF Files', content='Downloading necessary files and resources for the Web Researcher assistant.', files=[{{'name': local_files.split('/')[-1], 'path': local_files}} for local_files in downloaded_files]"
+            # )
 
-            downloaded_files_list = "\n".join(
-                [f"- {file}" for file in downloaded_files]
-            )
-            await self.mesg_queue.put(
-                Message(
-                    status=StatusEnum.success,
-                    message=f"Downloaded files:\n{downloaded_files_list}\n",
-                ).model_dump_json()
-            )
+            # await self.mesg_queue.put(
+            #     StepIndicator(
+            #         title="Download PDF Files",
+            #         content="Downloading necessary files and resources for the Web Researcher assistant.",
+            #         files=[
+            #             {"name": local_files.split("/")[-1], "path": local_files}
+            #             for local_files in downloaded_files
+            #         ],
+            #     ).model_dump_json(exclude_unset=False)
+            # )
 
             await self.process_files_with_assistant(client, downloaded_files)
             await self.mesg_queue.put(None)
