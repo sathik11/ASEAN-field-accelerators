@@ -17,7 +17,7 @@ async function parse({
   close: () => void;
   question: string;
 }) {
-  const url = "http://127.0.0.1:8089/score"; // Updated to local endpoint
+  const url = "http://127.0.0.1:8090/score"; // Updated to local endpoint
 
   try {
     log("Connecting to " + url);

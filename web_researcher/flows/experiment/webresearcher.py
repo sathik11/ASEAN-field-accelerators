@@ -49,10 +49,10 @@ class WebResearcher:
                 possible_url = "http://" + possible_url
             extracted_domain = tldextract.extract(possible_url)
             domain = f"{extracted_domain.domain}.{extracted_domain.suffix}"
-            print(
-                f"Creating StepIndicator with title='Extracting Domain and Query', content='Extracted domain: {domain}, query: {query_text}  for Bing Search'"
-            )
-            print("*" * 16)
+            # print(
+            #     f"Creating StepIndicator with title='Extracting Domain and Query', content='Extracted domain: {domain}, query: {query_text}  for Bing Search'"
+            # )
+            # print("*" * 16)
             self.mesg_queue.put_nowait(
                 StepIndicator(
                     title="Extracting Domain and Query",
@@ -78,14 +78,16 @@ class WebResearcher:
         domain, query_text = await self.extract_domain_and_query(query)
 
         if not domain:
-            logging.error(f"No valid domain found in the query: {query}")
-            raise ValueError("No valid domain found in the search query.")
+            logging.warning(f"No valid domain found in the query: {query}")
+            search_query = f"filetype:{file_type} {query_text}"
+        else:
+            search_query = f"site:{domain} filetype:{file_type} {query_text}"
 
         try:
             async with session.get(
                 url="https://api.bing.microsoft.com/v7.0/search",
                 params={
-                    "q": f"site:{domain} filetype:{file_type} {query_text}",
+                    "q": search_query,
                     "count": query_params.get("count", 10),
                 },
                 headers=headers,

@@ -20,7 +20,8 @@ export default function GenAIShowcase() {
     {
       id: "web-researcher",
       name: "Web Researcher",
-      description: "Personal Research Assistant",
+      description:
+        "Personal Research Assistant that can help you find information on the web and summarize it.",
       component: <WebResearcher />,
     },
     {

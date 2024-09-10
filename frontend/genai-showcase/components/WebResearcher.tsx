@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useCallback, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,8 +7,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User, Bot, ChevronRight, ChevronLeft, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MarkdownRenderer } from "./MarkdownRenderer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import ReactMarkdown from "react-markdown";
 
 interface Message {
   role: "user" | "assistant";
@@ -22,7 +23,14 @@ interface InitializationStep {
   files?: { name: string; path: string }[];
 }
 
-export default function ChatInterface() {
+const exampleMessages = [
+  "Latest OpenAI research openai.com",
+  "Responsible AI research microsoft.com",
+  "Current Health research news.nih.gov",
+  "Travel guidelines https://www.caas.gov.sg/",
+];
+
+export default function WebResearcherInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -132,6 +140,10 @@ export default function ChatInterface() {
     setChatSession((prev) => prev + 1);
   };
 
+  const handleExampleClick = (example: string) => {
+    setInput(example);
+  };
+
   const renderMessage = (message: Message) => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -166,8 +178,8 @@ export default function ChatInterface() {
                 {message.content}
               </p>
             ) : (
-              <div className="prose prose-sm max-w-none overflow-hidden">
-                <MarkdownRenderer content={message.content} />
+              <div className="prose prose-sm dark:prose-invert max-w-none overflow-hidden">
+                <ReactMarkdown>{message.content}</ReactMarkdown>
               </div>
             )}
           </div>
@@ -196,7 +208,7 @@ export default function ChatInterface() {
           >
             <Card className="h-full rounded-none">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle>Initialization Progress</CardTitle>
+                <CardTitle>Research Steps:</CardTitle>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -223,7 +235,6 @@ export default function ChatInterface() {
       </AnimatePresence>
       <div className="flex flex-col flex-grow">
         <div className="p-4 border-b flex justify-between items-center">
-          <h2 className="text-xl font-bold">GenAI Chatbot Showcase</h2>
           <div className="flex items-center space-x-2">
             <Button
               variant="outline"
@@ -258,21 +269,38 @@ export default function ChatInterface() {
             </AnimatePresence>
           </div>
         </ScrollArea>
-        <form
-          onSubmit={handleSendMessage}
-          className="p-4 border-t flex items-center space-x-2"
-        >
-          <Input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your message..."
-            disabled={isLoading}
-            className="flex-grow"
-          />
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? "Sending..." : "Send"}
-          </Button>
-        </form>
+        <div className="p-4 border-t">
+          <div className="mb-2">
+            <p className="text-sm font-semibold">Examples:</p>
+            <div className="flex space-x-2">
+              {exampleMessages.map((example, index) => (
+                <Button
+                  key={index}
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleExampleClick(example)}
+                >
+                  {example}
+                </Button>
+              ))}
+            </div>
+          </div>
+          <form
+            onSubmit={handleSendMessage}
+            className="flex items-center space-x-2"
+          >
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Type your message..."
+              disabled={isLoading}
+              className="flex-grow"
+            />
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? "Sending..." : "Send"}
+            </Button>
+          </form>
+        </div>
       </div>
     </div>
   );
