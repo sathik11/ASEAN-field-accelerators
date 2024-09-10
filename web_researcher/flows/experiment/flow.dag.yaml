@@ -4,7 +4,7 @@ environment:
 inputs:
   question:
     type: string
-    default: health insurance https://aia.com.sg
+    default: prushield https://www.prudential.com.sg/
   test:
     type: bool
     default: false
