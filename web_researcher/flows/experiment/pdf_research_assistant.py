@@ -63,5 +63,6 @@ async def my_python_tool(
             status=StatusEnum.success, message="Finished processing the files.\n"
         ).model_dump_json()
     )
+
     # Return the list of messages to the output
     yield list_of_messages

@@ -4,7 +4,7 @@ environment:
 inputs:
   question:
     type: string
-    default: prushield https://www.prudential.com.sg/
+    default: insurance azure openai microsoft.com
   test:
     type: bool
     default: false

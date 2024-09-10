@@ -4,6 +4,7 @@ import logging
 import os
 import re
 import tempfile
+from openai.types.beta.assistant import Assistant
 import tldextract
 import uuid
 from enum import Enum
@@ -136,7 +137,7 @@ class WebResearcher:
         instructions: str,
         model: str,
         tools: list[dict],
-    ) -> AzureOpenAI:
+    ) -> Assistant:
         """
         Retrieves or creates an Azure OpenAI assistant with the specified configuration.
 
@@ -174,6 +175,15 @@ class WebResearcher:
                 super().__init__()
                 self.mesg_queue = mesg_queue
 
+            def on_tool_call_created(self, tool_call):
+                self.mesg_queue.put_nowait(
+                    Message(
+                        status=StatusEnum.success,
+                        message=f"\nassistant Tool called > {tool_call.type}\n",
+                    ).model_dump_json()
+                )
+                logging.info(f"\nassistant > {tool_call.type}\n")
+
             @override
             def on_message_done(self, message) -> None:
                 print(f"Message done: {message.content}")
@@ -192,12 +202,18 @@ class WebResearcher:
                     message=f"Created vector store - {vector_store_name}\n",
                 ).model_dump_json()
             )
+            # print(f"adding files {files} to vector store {vector_store_name}")
+
+            # During testing, if are calling the same query the file stream is not getting closed and hence the file is not getting added to the vector store. Hence, we are closing the file stream after the file is added to the vector store and also deleting the file from the tmp location.
+
             file_streams = [open(path, "rb") for path in files]
+
+            # print(f"file streams: {file_streams}")
 
             file_batch = client.beta.vector_stores.file_batches.upload_and_poll(
                 vector_store_id=vector_store.id, files=file_streams
             )
-            print(f"File Batch Upload Status: {file_batch.status}")
+            # print(f"File Batch Upload Status: {file_batch.status}")
 
             await self.mesg_queue.put(
                 Message(
@@ -206,24 +222,35 @@ class WebResearcher:
                 ).model_dump_json()
             )
 
-            assistant = await self.get_or_create_assistant(
+            assistant: Assistant = await self.get_or_create_assistant(
                 client=client,
-                name="Web_Research_Assistant",
+                name="Web_Research_Assistant_Demo",
                 description="Assistant that answers questions based on the files in the vector store",
                 instructions="You are a helpful AI assistant that can help summarize the files in less than 100 words.",
                 model="gpt-4o",
                 tools=[{"type": "file_search"}],
             )
+            # print(
+            #     f"Assistant: {assistant} and Vector Store: {vector_store} and their respective IDs are: {assistant.id} and {vector_store.id}"
+            # )
+
+            SUMMARISE_INSTRUCTIONS = "Summarize all the files attached vector store one by one in less than 100 words.You have to use your **file_search** tool.Include the file name in the summary. Output in markdown format only."
 
             thread = client.beta.threads.create(
                 messages=[
                     {
                         "role": "user",
-                        "content": "Summarize each file in less than 100 words.",
+                        "content": SUMMARISE_INSTRUCTIONS,
                     }
                 ],
                 tool_resources={"file_search": {"vector_store_ids": [vector_store.id]}},
             )
+
+            # print(f"Thread created: {thread.id}")
+
+            await asyncio.sleep(
+                1
+            )  # Sleep for 1 second to ensure the thread is created before starting the stream. Not ideal and need to test if we actually need this.
 
             await self.mesg_queue.put(
                 Message(
@@ -232,10 +259,16 @@ class WebResearcher:
                 ).model_dump_json()
             )
 
+            # print("*" * 12)
+            # print(
+            #     f"Assistant: {assistant} and Vector Store: {vector_store} and their respective IDs are: {assistant.id} and {vector_store.id} and Thread ID: {thread.id}"
+            # )
+            # print("*" * 12)
+
             with client.beta.threads.runs.stream(
                 thread_id=thread.id,
                 assistant_id=assistant.id,
-                instructions="Summarize all the files one by one in less than 100 words. Include the file name in the summary. Output in markdown format only.",
+                instructions=SUMMARISE_INSTRUCTIONS,
                 event_handler=EventHandler(),
             ) as stream:
                 stream.until_done()
@@ -252,6 +285,10 @@ class WebResearcher:
         finally:
             for stream in file_streams:
                 stream.close()
+            # Delete the file from the tmp location to avoid filling up the disk space and also to avoid any issues during the next run.
+            for file in files:
+                os.remove(file)
+            # Delete the vector store
             client.beta.vector_stores.delete(vector_store_id=vector_store.id)
             await self.mesg_queue.put(None)
 
@@ -282,11 +319,9 @@ class WebResearcher:
             await self.mesg_queue.put(
                 Message(
                     status=StatusEnum.success,
-                    message=f"### Downloaded files:\n{downloaded_files_list}\n",
+                    message=f"Downloaded files:\n{downloaded_files_list}\n",
                 ).model_dump_json()
             )
 
-        process_task = asyncio.create_task(
-            self.process_files_with_assistant(client, downloaded_files)
-        )
-        return process_task
+            await self.process_files_with_assistant(client, downloaded_files)
+            await self.mesg_queue.put(None)
