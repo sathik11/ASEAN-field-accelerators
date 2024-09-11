@@ -13,7 +13,7 @@ async function parse({
 }: {
   log: (msg: string) => void;
   send: (msg: string) => void;
-  error: (msg: Error | any) => void;
+  error: (msg: Error | unknown) => void;
   close: () => void;
   question: string;
 }) {
@@ -92,8 +92,8 @@ export async function POST(req: NextRequest) {
           console.log(msg); // Only log to the server console
         },
         send,
-        error: (err: Error | any) => {
-          send("data: " + err?.message);
+        error: (err: Error | unknown) => {
+          send("data: " + (err instanceof Error ? err.message : String(err)));
           close();
         },
         close,

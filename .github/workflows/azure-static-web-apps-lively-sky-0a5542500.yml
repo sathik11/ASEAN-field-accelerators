@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'frontend/genai-showcase/**/*'
+      - '.github/workflows/azure-static-web-apps-lively-sky-0a5542500.yml'
   pull_request:
     types: [opened, synchronize, reopened, closed]
     branches:

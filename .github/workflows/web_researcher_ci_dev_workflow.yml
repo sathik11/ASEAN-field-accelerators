@@ -23,7 +23,7 @@ on:
       - development
     paths:
       - 'web_researcher/**'
-      - '.github/**'
+      - '.github/workflows/web_researcher_ci_dev_pipeline.yml'
       - 'llmops/**'
 
 

@@ -23,7 +23,7 @@ on:
       - development
     paths:
       - 'class_flows/**'
-      - '.github/**'
+      - '.github/workflows/class_flows_ci_dev_workflow.yml'
       - 'llmops/**'
 
 #=====================================

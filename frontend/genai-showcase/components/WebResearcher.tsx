@@ -10,10 +10,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ReactMarkdown from "react-markdown";
 
+// Define types for our messages and initialization steps
+type MessageRole = "user" | "assistant";
+type MessageStatus = "error" | "success" | "loading";
+
 interface Message {
-  role: "user" | "assistant";
+  role: MessageRole;
   content: string;
-  status?: "error" | "success" | "loading";
+  status?: MessageStatus;
   reference?: { name: string; path: string }[];
 }
 
@@ -24,6 +28,7 @@ interface InitializationStep {
   files?: { name: string; path: string }[];
 }
 
+// Example messages for quick input
 const exampleMessages = [
   "Latest OpenAI research openai.com",
   "Responsible AI research microsoft.com",
@@ -32,6 +37,7 @@ const exampleMessages = [
 ];
 
 export default function WebResearcherInterface() {
+  // State management
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -40,22 +46,27 @@ export default function WebResearcherInterface() {
   >([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [chatSession, setChatSession] = useState(0);
+
+  // Ref for scroll management
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
+  // Effect to scroll to bottom when messages change
   useEffect(() => {
     if (scrollAreaRef.current) {
       scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
     }
   }, [messages]);
 
+  // Handler for sending messages
   const handleSendMessage = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
       if (input.trim() && !isLoading) {
-        // Clear messages and initialization steps
+        // Clear previous messages and steps
         setMessages([]);
         setInitializationSteps([]);
 
+        // Add user message
         const userMessage: Message = { role: "user", content: input };
         setMessages((prev) => [...prev, userMessage]);
         setInput("");
@@ -64,15 +75,11 @@ export default function WebResearcherInterface() {
         try {
           const response = await fetch("/api/web-researcher", {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ question: input }),
           });
 
-          if (!response.ok) {
-            throw new Error("Network response was not ok");
-          }
+          if (!response.ok) throw new Error("Network response was not ok");
 
           const reader = response.body?.getReader();
           const decoder = new TextDecoder();
@@ -86,13 +93,12 @@ export default function WebResearcherInterface() {
 
               const chunk = decoder.decode(value, { stream: true });
               const lines = chunk.split("\n\n");
+
               for (const line of lines) {
                 if (line.startsWith("data: ")) {
                   const data = line.slice(6);
                   try {
                     const parsedData = JSON.parse(data);
-                    console.log("Parsed data:", parsedData);
-
                     const eventData = parsedData.answer
                       ? JSON.parse(parsedData.answer)
                       : parsedData;
@@ -106,13 +112,19 @@ export default function WebResearcherInterface() {
                           content: eventData.content,
                           status: eventData.status,
                         };
-                        setMessages((prev) => [...prev, assistantMessage]);
+                        setMessages((prev) => [
+                          ...prev,
+                          assistantMessage as Message,
+                        ]);
                       } else {
                         assistantMessage.content += eventData.content;
-                        setMessages((prev) => [
-                          ...prev.slice(0, -1),
-                          { ...assistantMessage },
-                        ]);
+                        setMessages((prev) =>
+                          prev.map((msg, index) =>
+                            index === prev.length - 1
+                              ? { ...(assistantMessage as Message) }
+                              : msg
+                          )
+                        );
                       }
                     }
                   } catch (error) {
@@ -139,16 +151,19 @@ export default function WebResearcherInterface() {
     [input, isLoading]
   );
 
+  // Handler for starting a new chat
   const handleNewChat = () => {
     setMessages([]);
     setInitializationSteps([]);
     setChatSession((prev) => prev + 1);
   };
 
+  // Handler for example message clicks
   const handleExampleClick = (example: string) => {
     setInput(example);
   };
 
+  // Function to render individual messages
   const renderMessage = (message: Message) => (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -218,6 +233,7 @@ export default function WebResearcherInterface() {
     </motion.div>
   );
 
+  // Main component render
   return (
     <div className="flex h-[600px] bg-background rounded-lg shadow-lg overflow-hidden">
       <AnimatePresence>
@@ -273,7 +289,7 @@ export default function WebResearcherInterface() {
                 variant="ghost"
                 size="icon"
                 onClick={() => setIsSidebarOpen(true)}
-                title="Open initialization progress"
+                title="Open agent progress"
               >
                 <ChevronRight className="h-4 w-4" />
                 <span className="sr-only">Open initialization progress</span>

@@ -19,7 +19,7 @@ on:
       - development
     paths:
       - 'doc_processing/**'
-      - '.github/**'
+      - '.github/workflows/doc_processing_pr_dev_pipeline.yml'
       - 'llmops/**'
 
 #=====================================
