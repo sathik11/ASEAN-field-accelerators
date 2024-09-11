@@ -6,7 +6,9 @@
       "outputLocation": ".next",
       "appBuildCommand": "npm run build",
       "run": "npm run dev",
-      "appDevserverUrl": "http://localhost:3000"
+      "appDevserverUrl": "http://localhost:3000",
+      "appName": "genai-showcase-01",
+      "resourceGroup": "genai-showcase-01-rg"
     }
   }
 }
