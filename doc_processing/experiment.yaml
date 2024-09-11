@@ -44,7 +44,6 @@ datasets:
       test: "${data.test}"
       customer_id: "${data.customer_id}"
 
-
 evaluators:
   - name: doc_processing_flow
     flow: flows/evaluation
@@ -54,7 +53,7 @@ evaluators:
         source: data/eval_data.jsonl
         description: "This dataset is for evaluating flows."
         mappings:
-          groundtruth: "${data.answer1}"
+          groundtruth: "${data.answer}"
           prediction: "${run.outputs.answer}"
   # - name: doc_processing_flow_adv
   #   flow: flows/evaluation_adv
