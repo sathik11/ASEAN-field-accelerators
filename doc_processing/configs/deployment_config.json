@@ -3,13 +3,13 @@
         {
             "ENV_NAME": "dev",
             "TEST_FILE_PATH": "sample-request.json",
-            "ENDPOINT_NAME": "ssattiraju-llmops-endpoint",
+            "ENDPOINT_NAME": "ssattiraju-endpoint-02",
             "ENDPOINT_DESC": "A Managed compute based endpoint serving a flow for  agentic document processor",
             "DEPLOYMENT_DESC": "prompt flow deployment",
             "PRIOR_DEPLOYMENT_NAME": "",
             "PRIOR_DEPLOYMENT_TRAFFIC_ALLOCATION": "0",
-            "CURRENT_DEPLOYMENT_NAME": "doc-processing-01",
-            "CURRENT_DEPLOYMENT_TRAFFIC_ALLOCATION": "100",
+            "CURRENT_DEPLOYMENT_NAME": "pf-doc-processing-01",
+            "CURRENT_DEPLOYMENT_TRAFFIC_ALLOCATION": "0",
             "DEPLOYMENT_VM_SIZE": "Standard_DS3_v2",
             "DEPLOYMENT_INSTANCE_COUNT": 1,
             "ENVIRONMENT_VARIABLES": {
