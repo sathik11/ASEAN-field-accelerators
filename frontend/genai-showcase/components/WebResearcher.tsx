@@ -14,6 +14,7 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   status?: "error" | "success" | "loading";
+  reference?: { name: string; path: string }[];
 }
 
 interface InitializationStep {
@@ -51,6 +52,10 @@ export default function WebResearcherInterface() {
     async (e: React.FormEvent) => {
       e.preventDefault();
       if (input.trim() && !isLoading) {
+        // Clear messages and initialization steps
+        setMessages([]);
+        setInitializationSteps([]);
+
         const userMessage: Message = { role: "user", content: input };
         setMessages((prev) => [...prev, userMessage]);
         setInput("");
@@ -180,6 +185,24 @@ export default function WebResearcherInterface() {
             ) : (
               <div className="prose prose-sm dark:prose-invert max-w-none overflow-hidden">
                 <ReactMarkdown>{message.content}</ReactMarkdown>
+                {message.reference && (
+                  <div className="mt-2">
+                    <p className="text-xs font-semibold">References:</p>
+                    <ul className="list-disc list-inside">
+                      {message.reference.map((ref, index) => (
+                        <li key={index} className="text-xs break-words">
+                          <a
+                            href={ref.path}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {ref.name}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             )}
           </div>
