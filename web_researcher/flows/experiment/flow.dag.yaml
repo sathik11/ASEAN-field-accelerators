@@ -7,7 +7,7 @@ inputs:
     default: insurance azure openai microsoft.com
   test:
     type: bool
-    default: false
+    default: true
 outputs:
   answer:
     type: string

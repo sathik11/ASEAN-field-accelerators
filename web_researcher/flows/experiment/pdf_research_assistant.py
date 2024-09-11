@@ -21,11 +21,10 @@ async def my_python_tool(
 
     if test:
         test_query = f"site:example.com filetype:{filetype} {question}"
-        await mesg_queue.put(
-            Message(
-                content=f"Test mode enabled. Using query: {test_query}\n",
-            ).model_dump_json(exclude_unset=False)
-        )
+        yield Message(
+            content=f"Test mode enabled. Using query: {test_query}\n",
+        ).model_dump_json(exclude_unset=False)
+        return  # Return early if test mode is enabled
 
     client = AzureOpenAI(
         api_key=aoaiConnection.secrets["api_key"],
