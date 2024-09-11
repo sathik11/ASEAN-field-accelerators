@@ -1,0 +1,31 @@
+$schema: https://azuremlschemas.azureedge.net/promptflow/latest/Flow.schema.json
+environment:
+  python_requirements_txt: requirements.txt
+inputs:
+  question:
+    type: string
+    default: what is the customer name
+  test:
+    type: bool
+    default: false
+  customer_id:
+    type: string
+    default: "116"
+outputs:
+  answer:
+    type: string
+    reference: ${autogen_doc_processor.output}
+nodes:
+- name: autogen_doc_processor
+  type: python
+  source:
+    type: code
+    path: autogen_doc_processor.py
+  inputs:
+    question: ${inputs.question}
+    azureOpenAIConnection: aoai
+    docIntelligenceConnection: doc_intelligence_connection
+    cosmosConnection: cosmos_custom_connection
+    storageConnection: storage_custom_connection
+    test: ${inputs.test}
+    customer_id: ${inputs.customer_id}

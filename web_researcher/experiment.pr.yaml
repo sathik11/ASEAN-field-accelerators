@@ -1,4 +1,4 @@
-name: web_classification
+name: web_researcher
 
 datasets:
   - name: web_researcher_pr

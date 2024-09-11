@@ -1,0 +1,68 @@
+name: doc_processing
+flow: flows/experiment
+
+connections:
+  - name: aoai
+    connection_type: AzureOpenAIConnection
+    api_base: https://ss-cchat-sf-ai-aiservices7wx5mg43sbnl4.openai.azure.com/
+    api_version: 2024-02-15-preview
+    api_key: ${api_key}
+    api_type: azure
+  - name: doc_intelligence_connection
+    connection_type: CustomConnection
+    configs:
+      endpoint: "https://ssattiraju-doc-intelligence-01.cognitiveservices.azure.com/"
+    secrets:
+      key: ${key}
+  - name: cosmos_custom_connection
+    connection_type: CustomConnection
+    configs:
+      endpoint: "https://tech-excel-cosmosdb-01.documents.azure.com:443/"
+      db_name: "db_conversation_history"
+      container_name: "autogen_pf_cust_hist"
+    secrets:
+      key: ${key}
+  - name: storage_custom_connection
+    connection_type: CustomConnection
+    configs:
+      url: "https://stgbbaig5yxdataproc.blob.core.windows.net/"
+    secrets:
+      key: ${key}
+datasets:
+  - name: doc_processing_train
+    source: data/data.jsonl
+    description: "This dataset is for prompt experiments."
+    mappings:
+      question: "${data.question}"
+      test: "${data.test}"
+      customer_id: "${data.customer_id}"
+  - name: doc_processing_train_new
+    source: data/data_new.jsonl
+    description: "This dataset is for prompt experiments."
+    mappings:
+      question: "${data.question}"
+      test: "${data.test}"
+      customer_id: "${data.customer_id}"
+
+
+evaluators:
+  - name: doc_processing_flow
+    flow: flows/evaluation
+    datasets:
+      - name: doc_processing_train_eval
+        reference: doc_processing_train
+        source: data/eval_data.jsonl
+        description: "This dataset is for evaluating flows."
+        mappings:
+          groundtruth: "${data.answer1}"
+          prediction: "${run.outputs.answer}"
+  # - name: doc_processing_flow_adv
+  #   flow: flows/evaluation_adv
+  #   datasets:
+  #     - name: doc_processing_train_new_eval
+  #       reference: doc_processing_train_new
+  #       source: data/eval_data_new.jsonl
+  #       description: "This dataset is for evaluating flows."
+  #       mappings:
+  #         groundtruth: "${data.answer}"
+  #         prediction: "${run.outputs.category}"

@@ -1,0 +1,17 @@
+FROM python:3.10
+
+# Required: install runit and procps
+RUN apt-get update && apt-get install -y runit procps \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install promptflow-python-bundle
+RUN pip install -U promptflow-python-bundle
+
+# Install promptflow to ensure forward compatibility. It will be phased out in the future.
+RUN pip install promptflow promptflow-azure promptflow-tools PyPDF2 aiohttp tenacity uvicorn autogen>=0.3.0 azure-storage-blob azure-cosmos pyyaml azure-ai-documentintelligence
+
+# Set port
+ENV PORT 8000
+EXPOSE $PORT
+CMD ["pfapp"]

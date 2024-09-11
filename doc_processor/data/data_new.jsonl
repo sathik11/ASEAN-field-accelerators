@@ -1,0 +1,6 @@
+{"question":"load https://stgbbaig5yxdataproc.blob.core.windows.net/demo-data/116_ExaminerReport_Case.pdf and check the blood pressure","customer_id":"116", "test": "true"}
+{"question": "load https://stgbbaig5yxdataproc.blob.core.windows.net/demo-data/116_ME_Case.pdf and check the occupation","customer_id": "116","test": "true"}
+{"question": "Is there a family medical history","customer_id": "116","test": "true"}
+{"question": "What is users blood pressure","customer_id": "116","test": "true"}
+{"question":"load https://stgbbaig5yxdataproc.blob.core.windows.net/demo-data/117_ExaminerReport_Case.pdf and tell me weight","customer_id":"117"}
+{"question":"Who is financial planner","customer_id":"117","test": "true"}

@@ -1,0 +1,12 @@
+promptflow
+promptflow-azure
+promptflow-tools
+PyPDF2>=3.0.1
+aiohttp
+tenacity
+uvicorn
+autogen>=0.3.0
+azure-storage-blob
+azure-cosmos
+pyyaml
+azure-ai-documentintelligence
