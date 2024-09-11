@@ -14,7 +14,7 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+# lib/ # uncomment if you have a lib directory, like we do
 lib64/
 parts/
 sdist/
