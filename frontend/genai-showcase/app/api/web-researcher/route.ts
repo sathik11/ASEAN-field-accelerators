@@ -1,8 +1,8 @@
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export const dynamic = "force-dynamic";
-// export const runtime = "edge";
+export const config = {
+  runtime: "edge",
+};
 
 async function parse({
   log,
@@ -23,7 +23,7 @@ async function parse({
 
   try {
     log("Connecting to " + url);
-    log("Parameters: " + JSON.stringify({ question })); // Log the parameters
+    log("Parameters: " + JSON.stringify({ question }));
     const response = await fetch(url, {
       method: "POST",
       headers: {
@@ -54,9 +54,9 @@ async function parse({
           if (done) break;
 
           const chunk = decoder.decode(value, { stream: true });
-          log("Chunk received: " + chunk); // Log the received chunk
+          log("Chunk received: " + chunk);
 
-          send(chunk); // Send the raw chunk to the client
+          send(chunk);
         }
       };
 
@@ -68,13 +68,9 @@ async function parse({
   }
 }
 
-/**
- * Implements long running response. Only works with edge runtime.
- * @link https://github.com/vercel/next.js/issues/9965
- */
 export async function POST(req: NextRequest) {
-  const { question } = await req.json(); // Ensure the question is correctly parsed
-  console.log("Received question: " + question); // Log the question
+  const { question } = await req.json();
+  console.log("Received question: " + question);
 
   const encoder = new TextEncoder();
   let closed = false;
@@ -96,7 +92,7 @@ export async function POST(req: NextRequest) {
 
       parse({
         log: (msg: string) => {
-          console.log(msg); // Only log to the server console
+          console.log(msg);
         },
         send,
         error: (err: Error | unknown) => {

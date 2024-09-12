@@ -1,9 +1,8 @@
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export const dynamic = "force-dynamic";
-// export const runtime = "edge";
-
+export const config = {
+  runtime: "edge",
+};
 async function parse({
   log,
   send,
