@@ -17,31 +17,40 @@ async function parse({
   close: () => void;
   question: string;
 }) {
+  log("Parsing question: " + question);
+  // const url = "http://localhost:8081/score";
   const url =
     "https://ssattiraju-llmops-endpoint.swedencentral.inference.ml.azure.com/score";
+
   const apiKey = process.env.DOC_PROCSSOR_KEY;
 
+  if (!apiKey) {
+    throw new Error("DOC_PROCSSOR_KEY is not set in environment variables");
+  }
   try {
     log("Connecting to " + url);
-    log("Parameters: " + JSON.stringify({ question })); // Log the parameters
+    log("Parameters: " + JSON.stringify({ question }));
     const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Accept: "text/event-stream",
         Authorization: "Bearer " + apiKey,
-        "azureml-model-deployment": "web-researcher-01",
+        "azureml-model-deployment": "doc-processor-01",
       },
       body: JSON.stringify({
         question: question,
         test: "false",
+        customer_id: "116",
       }),
     });
 
     log("Response status: " + response.status);
 
     if (!response.ok) {
-      throw new Error("Network response was not ok");
+      throw new Error(
+        `Network response was not ok: ${response.status} ${response.statusText}`
+      );
     }
 
     const reader = response.body?.getReader();
@@ -54,9 +63,9 @@ async function parse({
           if (done) break;
 
           const chunk = decoder.decode(value, { stream: true });
-          log("Chunk received: " + chunk); // Log the received chunk
+          log("Chunk received: " + chunk);
 
-          send(chunk); // Send the raw chunk to the client
+          send(chunk);
         }
       };
 
@@ -64,17 +73,13 @@ async function parse({
       close();
     }
   } catch (err) {
-    error(new Error("Failed to connect to SSE: " + err));
+    error(err instanceof Error ? err : new Error("An unknown error occurred"));
   }
 }
 
-/**
- * Implements long running response. Only works with edge runtime.
- * @link https://github.com/vercel/next.js/issues/9965
- */
 export async function POST(req: NextRequest) {
-  const { question } = await req.json(); // Ensure the question is correctly parsed
-  console.log("Received question: " + question); // Log the question
+  const { question } = await req.json();
+  console.log("Received question: " + question);
 
   const encoder = new TextEncoder();
   let closed = false;
@@ -96,7 +101,7 @@ export async function POST(req: NextRequest) {
 
       parse({
         log: (msg: string) => {
-          console.log(msg); // Only log to the server console
+          console.log(msg);
         },
         send,
         error: (err: Error | unknown) => {
