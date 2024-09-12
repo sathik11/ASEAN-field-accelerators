@@ -9,7 +9,9 @@
       "run": "npm run dev",
       "appDevserverUrl": "http://localhost:3000",
       "appName": "genai-showcase-01",
-      "resourceGroup": "genai-showcase-01-rg"
+      "resourceGroup": "genai-showcase-01-rg",
+      "apiLanguage": "node",
+      "apiVersion": "20"
     }
   }
 }
