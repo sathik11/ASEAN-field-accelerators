@@ -3,8 +3,6 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import WebResearcher from "@/components/chatbots/WebResearcher";
-// import CodeAssistant from "@/components/chatbots/CodeAssistant";
-// import ImageGenerator from "@/components/chatbots/ImageGenerator";
 import DocumentProcessor from "@/components/chatbots/DocumentProcessor";
 
 export default function Home() {
@@ -33,3 +31,8 @@ export default function Home() {
     </main>
   );
 }
+
+// Add generateStaticParams function
+// export async function generateStaticParams() {
+//   return [{ tab: "web-researcher" }, { tab: "document-processor" }];
+// }

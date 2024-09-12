@@ -3,8 +3,8 @@
   "configurations": {
     "genai-showcase": {
       "appLocation": ".",
-      "apiLocation": "api",
-      "outputLocation": "out",
+      "apiLocation": "",
+      "outputLocation": "",
       "appBuildCommand": "npm run build",
       "run": "npm run dev",
       "appDevserverUrl": "http://localhost:3000",
