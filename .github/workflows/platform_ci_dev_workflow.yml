@@ -97,30 +97,30 @@ jobs:
       # used automatic (serverless) runtime by default
       # writes the RUN ID in run_id.txt file. Used in next step
       #=====================================
-      - name: Execute prompt flow bulk run
-        uses: ./.github/actions/execute_script
-        with:
-          step_name: "Execute prompt flow bulk run"
-          script_parameter: |
-            python -m llmops.common.prompt_pipeline \
-            --subscription_id ${{ steps.subscription_details.outputs.SUBSCRIPTION_ID }} \
-            --build_id ${{ github.run_id }} \
-            --base_path ${{ inputs.use_case_base_path }} \
-            --env_name ${{ inputs.env_name }} \
-            --output_file run_id.txt
+      # - name: Execute prompt flow bulk run
+      #   uses: ./.github/actions/execute_script
+      #   with:
+      #     step_name: "Execute prompt flow bulk run"
+      #     script_parameter: |
+      #       python -m llmops.common.prompt_pipeline \
+      #       --subscription_id ${{ steps.subscription_details.outputs.SUBSCRIPTION_ID }} \
+      #       --build_id ${{ github.run_id }} \
+      #       --base_path ${{ inputs.use_case_base_path }} \
+      #       --env_name ${{ inputs.env_name }} \
+      #       --output_file run_id.txt
 
       #=====================================
       # Reads run_id.txt file. Assigns it to variable RUN_NAME
       # RUN_NAME Used in next step for evaluation of flows
       #=====================================   
-      - name: Read PromptFlow Runs
-        shell: bash
-        run: |
-          readarray arr <"run_id.txt"
-          run_name=${arr[0]}
-          echo $run_name
-          echo "RUN_NAME=${run_name}"  >> "$GITHUB_ENV"
-          echo $PWD
+      # - name: Read PromptFlow Runs
+      #   shell: bash
+      #   run: |
+      #     readarray arr <"run_id.txt"
+      #     run_name=${arr[0]}
+      #     echo $run_name
+      #     echo "RUN_NAME=${run_name}"  >> "$GITHUB_ENV"
+      #     echo $PWD
 
       #=====================================
       # Registers evaluation dataset in Azure ML as Data Asset
@@ -161,11 +161,11 @@ jobs:
       # Published generated reports in csv and html format
       # Available as pipeline artifacts
       #=====================================
-      - name: Archive CSV
-        uses: actions/upload-artifact@v3
-        with:
-          name: evaluation-reports
-          path: ./reports
+      # - name: Archive CSV
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: evaluation-reports
+      #     path: ./reports
 
   #=====================================
   # Execute platform_cd_dev_workflow flow for deployment of flows

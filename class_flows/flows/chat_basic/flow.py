@@ -51,7 +51,7 @@ class ChatFlow:
         self.max_total_token = max_total_token
 
     @trace
-    async def __call__(
+    def __call__(
         self,
         question: str,
         chat_history: list = None,
@@ -80,7 +80,7 @@ class ChatFlow:
         # output is a string
         output = prompty(question=question, chat_history=chat_history)
 
-        yield output
+        return output
 
 
 class AGNextFlow:
