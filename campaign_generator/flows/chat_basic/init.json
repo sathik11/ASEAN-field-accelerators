@@ -2,6 +2,5 @@
     "model_config": {
         "azure_deployment": "gpt-4o",
         "connection": "aoai"
-    },
-    "max_total_token": 2048
+    }
 }
