@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import WebResearcher from "@/components/chatbots/WebResearcher";
 import DocumentProcessor from "@/components/chatbots/DocumentProcessor";
-
+import CampaignGenerator from "@/components/chatbots/CampaignGenerator";
 export default function Home() {
   const [activeTab, setActiveTab] = useState("web-researcher");
 
@@ -18,12 +18,18 @@ export default function Home() {
           <TabsTrigger value="document-processor">
             Document Processor
           </TabsTrigger>
+          <TabsTrigger value="campaign-generator">
+            Campaign Generator
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="web-researcher" className="mt-6">
           <WebResearcher />
         </TabsContent>
         <TabsContent value="document-processor" className="mt-6">
           <DocumentProcessor />
+        </TabsContent>
+        <TabsContent value="campaign-generator" className="mt-6">
+          <CampaignGenerator />
         </TabsContent>
       </Tabs>
     </div>

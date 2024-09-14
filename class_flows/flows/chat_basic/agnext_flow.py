@@ -5,7 +5,6 @@ from autogen_core.components import (
     DefaultTopicId,
     RoutedAgent,
     message_handler,
-    Image,
 )
 from autogen_core.components.models import (
     LLMMessage,
@@ -16,8 +15,8 @@ from autogen_core.components.models import (
 )
 from autogen_core.base import MessageContext, AgentId
 
-import openai
 import asyncio
+from datetime import datetime
 
 
 @dataclass
@@ -76,7 +75,7 @@ class EmailWriterAgent(RoutedAgent):
         self._model_client = model_client
         self._chat_history: List[LLMMessage] = [
             SystemMessage(
-                "You are a marketing email writer. Write a compelling email promoting our new product."
+                "You are a marketing email writer. Write a compelling email promoting our new product in less than 200 words."
             )
         ]
 
@@ -85,6 +84,15 @@ class EmailWriterAgent(RoutedAgent):
         self, message: GroupChatMessage, ctx: MessageContext
     ) -> None:
         self._chat_history.append(message.body)
+        source = message.body.source
+        if source == "MarketingManager":
+            # Received product information
+            pass  # Handled in chat history
+        elif source == "Editor":
+            # Received feedback from editor
+            pass  # Feedback added to chat history
+        else:
+            pass  # Other messages
 
     @message_handler
     async def handle_request_to_speak(
@@ -108,7 +116,7 @@ class FacebookPostWriterAgent(RoutedAgent):
         self._model_client = model_client
         self._chat_history: List[LLMMessage] = [
             SystemMessage(
-                "You are a social media manager. Write an engaging Facebook post promoting our new product."
+                "You are a social media manager. Write an engaging Facebook post promoting our new product in less than 100 words."
             )
         ]
 
@@ -174,7 +182,7 @@ class EditorAgent(RoutedAgent):
         self._model_client = model_client
         self._chat_history: List[LLMMessage] = [
             SystemMessage(
-                "You are an editor. Review the draft and reply with 'APPROVE' if it's good, or provide suggestions for improvement. Consider the below guidelines when reviewing:\n\n1. Is the content engaging and informative?\n2. Is the tone appropriate for the target audience?\n3. Are there any grammatical errors or typos?"
+                f"You are an editor. Review the draft and reply with 'APPROVE' if it's good, or provide suggestions for improvement. Consider the below guidelines when reviewing:\n\n1. Is the content engaging and informative?\n2. Is the tone appropriate for the target audience?\n3. Are there any grammatical errors or typos? 3. Request to include current month and year in the content. Current Month and Year is {datetime.now().strftime('%B %Y')}."  # noqa
             )
         ]
 
@@ -216,8 +224,9 @@ class MarketingManagerAgent(RoutedAgent):
         self._current_writer_index = 0
         self._chat_history: List[GroupChatMessage] = []
         self._product_info = None
-        self._approved_drafts = 0
+        self._approved_writers = set()
         self._output_queue = output_queue
+        self._writer_drafts = {}  # Keep track of drafts per writer
 
     @message_handler
     async def handle_message(
@@ -243,48 +252,67 @@ class MarketingManagerAgent(RoutedAgent):
                     ),
                     writer,
                 )
-
-            # Start the drafting process with the first writer
-            await self.send_message(
-                RequestToSpeak(), self._writers[self._current_writer_index]
-            )
+                # Request each speaker to speak
+                await self.send_message(RequestToSpeak(), writer)
 
         elif source in ["EmailWriter", "FacebookPostWriter", "TwitterPostWriter"]:
-            # Send draft to Editor
+            # Store the draft from the writer
+            self._writer_drafts[source] = message.body.content
+
+            # Send draft to Editor along with the writer's identifier
             await self.send_message(
-                GroupChatMessage(body=message.body),
+                GroupChatMessage(
+                    body=UserMessage(
+                        content=message.body.content,
+                        source=source,  # Include writer's source
+                    )
+                ),
                 self._editor,
             )
             # Request Editor to speak
             await self.send_message(RequestToSpeak(), self._editor)
 
         elif source == "Editor":
+            # Editor's feedback or approval
             content = message.body.content.upper()
+            # Extract the writer's identifier from the previous message
+            last_message = self._chat_history[-2]
+            writer_source = last_message.body.source  # The writer's identifier
+
             if "APPROVE" in content:
-                self._approved_drafts += 1
-                if self._approved_drafts < len(self._writers):
-                    # Proceed to the next writer
-                    self._current_writer_index += 1
-                    next_writer = self._writers[self._current_writer_index]
-                    await self.send_message(RequestToSpeak(), next_writer)
-                else:
+                # Mark writer as approved
+                self._approved_writers.add(writer_source)
+                print(f"{writer_source}'s draft has been approved.")
+
+                if len(self._approved_writers) == len(self._writers):
                     print("All drafts have been approved.")
             else:
-                # Send feedback back to the current writer
-                current_writer = self._writers[self._current_writer_index]
+                # Send feedback back to the specific writer
+                print(f"Asking {writer_source} to revise the draft.")
                 await self.send_message(
                     GroupChatMessage(body=message.body),
-                    current_writer,
+                    AgentId(writer_source, "default"),  # Route to the correct writer
                 )
                 # Request writer to revise
-                await self.send_message(RequestToSpeak(), current_writer)
+                await self.send_message(
+                    RequestToSpeak(), AgentId(writer_source, "default")
+                )
 
         elif source == "User":
-            # Handle user messages
+            # Forward the product name to ProductInformationProviderAgent
+            await self.send_message(
+                GroupChatMessage(
+                    body=UserMessage(
+                        content=message.body.content, source="MarketingManager"
+                    )
+                ),
+                self._product_info_provider,
+            )
+            # Request ProductInformationProviderAgent to speak
             await self.send_message(RequestToSpeak(), self._product_info_provider)
         else:
             # Handle other cases if needed
-            # print(f"Received message from {source}: {message.body.content}")
+            print(f"Received message from {source}: {message.body.content}")
             pass
 
     @message_handler
@@ -295,7 +323,4 @@ class MarketingManagerAgent(RoutedAgent):
             # Start by requesting product information
             await self.send_message(RequestToSpeak(), self._product_info_provider)
         else:
-            # Proceed with the drafting process
-            await self.send_message(
-                RequestToSpeak(), self._writers[self._current_writer_index]
-            )
+            print("All agents have spoken. MarketingManager is idle.")

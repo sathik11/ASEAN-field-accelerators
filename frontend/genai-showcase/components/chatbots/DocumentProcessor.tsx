@@ -244,7 +244,6 @@ export default function MultiAgentChat() {
               <span className="sr-only">Start a new chat</span>
             </Button>
           </div>
-          <h1 className="text-xl font-bold">Multi-Agent Chatbot</h1>
         </div>
         <ScrollArea className="flex-grow">
           <div className="p-4 space-y-4" ref={scrollAreaRef}>

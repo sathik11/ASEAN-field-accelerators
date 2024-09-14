@@ -93,9 +93,6 @@ class AGNextFlow:
     async def __call__(
         self, question: str, chat_history: list = None
     ):  # -> Generator[Any, Any, None]:
-        if self.test_mode:
-            yield "This is a test"
-
         run_task = asyncio.create_task(self.run(question, self.output_queue))
         while True:
             message = await self.output_queue.get()
@@ -120,28 +117,28 @@ class AGNextFlow:
 
         self.runtime = SingleThreadedAgentRuntime()
 
-        editor_type = await runtime.register(
-            "editor",
+        editor_type = await self.runtime.register(
+            "Editor",
             lambda: EditorAgent(model_client=aoai_model_client),
             subscriptions=lambda: [DefaultSubscription()],
         )
-        product_info_provider_type = await runtime.register(
-            "product_info_provider",
+        product_info_provider_type = await self.runtime.register(
+            "ProductInformationProvider",
             lambda: ProductInfomationProviderAgent(model_client=aoai_model_client),
             subscriptions=lambda: [DefaultSubscription()],
         )
-        email_writer_type = await runtime.register(
-            "email_writer",
+        email_writer_type = await self.runtime.register(
+            "EmailWriter",
             lambda: EmailWriterAgent(model_client=aoai_model_client),
             subscriptions=lambda: [DefaultSubscription()],
         )
-        facebook_writer_type = await runtime.register(
-            "facebook_post_writer",
+        facebook_writer_type = await self.runtime.register(
+            "FacebookPostWriter",
             lambda: FacebookPostWriterAgent(model_client=aoai_model_client),
             subscriptions=lambda: [DefaultSubscription()],
         )
-        twitter_writer_type = await runtime.register(
-            "twitter_post_writer",
+        twitter_writer_type = await self.runtime.register(
+            "TwitterPostWriter",
             lambda: TwitterPostWriterAgent(model_client=aoai_model_client),
             subscriptions=lambda: [DefaultSubscription()],
         )
@@ -153,8 +150,8 @@ class AGNextFlow:
         twitter_writer_id = AgentId(twitter_writer_type, "default")
         editor_id = AgentId(editor_type, "default")
         # Register the MarketingManagerAgent
-        await runtime.register(
-            "marketing_manager",
+        await self.runtime.register(
+            "MarketingManager",
             lambda: MarketingManagerAgent(
                 product_info_provider=product_info_provider_id,
                 writers=[email_writer_id, facebook_writer_id, twitter_writer_id],
@@ -164,8 +161,8 @@ class AGNextFlow:
             subscriptions=lambda: [DefaultSubscription()],
         )
 
-        runtime.start()
-        await runtime.publish_message(
+        self.runtime.start()
+        await self.runtime.publish_message(
             GroupChatMessage(
                 UserMessage(
                     content=question,
@@ -175,7 +172,7 @@ class AGNextFlow:
             DefaultTopicId(),
         )
 
-        await runtime.stop_when_idle()
+        await self.runtime.stop_when_idle()
         self.output_queue.put_nowait(None)
 
 
@@ -186,7 +183,9 @@ if __name__ == "__main__":
     config = AzureOpenAIModelConfiguration(connection="aoai", azure_deployment="gpt-4o")
     print(config)
     flow = AGNextFlow(config)
-    print(flow("Apple iPhone 16"))
-    # flow = ChatFlow(config)
-    # result = flow("What's Azure Machine Learning?", [])
-    # print(result)
+
+    async def main():
+        async for message in flow("Apple iPhone 16"):
+            print(message)
+
+    asyncio.run(main())
