@@ -66,10 +66,6 @@ jobs:
           echo "Printing environment variables:"
           env
 
-      - name: Check AOAI_API_KEY
-        run: |
-          echo "AOAI_API_KEY: $AOAI_API_KEY"
-
       - name: load the current Azure subscription details
         id: subscription_details
         shell: bash
@@ -149,17 +145,17 @@ jobs:
       # Prompt Flow connections should pre-exist 
       # used automatic (serverless) runtime by default
       #=====================================
-      - name: Execute bulk run evaluations
-        uses: ./.github/actions/execute_script
-        with:
-          step_name: "Execute bulk run evaluations"
-          script_parameter: |
-            python -m llmops.common.prompt_eval \
-            --subscription_id ${{ steps.subscription_details.outputs.SUBSCRIPTION_ID }} \
-            --build_id ${{ github.run_id }} \
-            --base_path ${{ inputs.use_case_base_path }} \
-            --env_name ${{ inputs.env_name }} \
-            --run_id "$RUN_NAME"
+      # - name: Execute bulk run evaluations
+      #   uses: ./.github/actions/execute_script
+      #   with:
+      #     step_name: "Execute bulk run evaluations"
+      #     script_parameter: |
+      #       python -m llmops.common.prompt_eval \
+      #       --subscription_id ${{ steps.subscription_details.outputs.SUBSCRIPTION_ID }} \
+      #       --build_id ${{ github.run_id }} \
+      #       --base_path ${{ inputs.use_case_base_path }} \
+      #       --env_name ${{ inputs.env_name }} \
+      #       --run_id "$RUN_NAME"
 
       #=====================================
       # Published generated reports in csv and html format

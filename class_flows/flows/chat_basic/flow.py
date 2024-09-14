@@ -84,14 +84,18 @@ class ChatFlow:
 
 
 class AGNextFlow:
-    def __init__(self, model_config: AzureOpenAIModelConfiguration):
+    def __init__(self, model_config: AzureOpenAIModelConfiguration, test_mode=True):
         self.model_config = model_config
         self.output_queue = asyncio.Queue()
+        self.test_mode = test_mode
 
     @trace
     async def __call__(
         self, question: str, chat_history: list = None
     ):  # -> Generator[Any, Any, None]:
+        if self.test_mode:
+            return "This is a test"
+
         run_task = asyncio.create_task(self.run(question, self.output_queue))
         while True:
             message = await self.output_queue.get()

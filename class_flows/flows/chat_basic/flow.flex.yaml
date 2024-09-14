@@ -19,6 +19,9 @@ init:
       azure_deployment: gpt-4o
       api_version: 2024-02-15-preview
       api_key: ${api_key}
+  test_mode:
+    type: bool
+    default: true
   # max_total_token:
   #   type: int
   #   default: 4096
