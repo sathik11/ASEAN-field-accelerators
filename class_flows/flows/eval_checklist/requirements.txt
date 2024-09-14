@@ -1,1 +1,1 @@
-promptflow
+promptflow>=1.11.0

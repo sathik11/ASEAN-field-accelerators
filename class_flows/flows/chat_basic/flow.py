@@ -104,9 +104,9 @@ class AGNextFlow:
     async def run(self, question: str, output_queue: asyncio.Queue):
         aoai_model_client = AzureOpenAIChatCompletionClient(
             model="gpt-4o",
-            api_key=self.model_config.api_key,
+            api_key=os.environ["AZURE_OPENAI_API_KEY"],
             api_version="2024-02-15-preview",
-            azure_endpoint="https://ss-cchat-sf-ai-aiservices7wx5mg43sbnl4.openai.azure.com/",
+            azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
             model_capabilities={
                 "vision": True,
                 "function_calling": True,
