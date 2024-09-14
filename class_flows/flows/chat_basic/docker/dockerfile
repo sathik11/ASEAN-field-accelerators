@@ -1,5 +1,22 @@
-FROM mcr.microsoft.com/azureml/promptflow/promptflow-runtime:latest
-COPY autogen_core-0.3.dev0-py3-none-any.whl .
-RUN pip install autogen_core-0.3.dev0-py3-none-any.whl
+# FROM mcr.microsoft.com/azureml/promptflow/promptflow-runtime:latest
+# RUN pip install https://raw.githubusercontent.com/lordlinus/PromptFlow-LLMOps-Example/main/class_flows/flows/autogen_core-0.3.dev0-py3-none-any.whl
+# COPY ./requirements.txt .
+# RUN pip install -r requirements.txt
+FROM python:3.11
+
+# Required: install runit and procps
+RUN apt-get update && apt-get install -y runit procps \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install promptflow-python-bundle
+RUN pip install -U promptflow-python-bundle
 COPY ./requirements.txt .
+# Install promptflow to ensure forward compatibility. It will be phased out in the future.
+RUN pip install promptflow promptflow-azure promptflow-tools 
+# Install additional packages
 RUN pip install -r requirements.txt
+# Set port
+ENV PORT 8000
+EXPOSE $PORT
+CMD ["pfapp"]
