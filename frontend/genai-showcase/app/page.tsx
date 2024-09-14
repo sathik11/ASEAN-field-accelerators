@@ -1,3 +1,4 @@
+// page.tsx
 "use client";
 
 import { useState } from "react";
@@ -9,12 +10,10 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState("web-researcher");
 
   return (
-    <main className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-8 text-center">
-        GenAI Chatbot Showcase
-      </h1>
+    <div className="space-y-8">
+      <section className="text-center"></section>
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="flex justify-center space-x-4">
           <TabsTrigger value="web-researcher">Web Researcher</TabsTrigger>
           <TabsTrigger value="document-processor">
             Document Processor
@@ -23,16 +22,10 @@ export default function Home() {
         <TabsContent value="web-researcher" className="mt-6">
           <WebResearcher />
         </TabsContent>
-
         <TabsContent value="document-processor" className="mt-6">
           <DocumentProcessor />
         </TabsContent>
       </Tabs>
-    </main>
+    </div>
   );
 }
-
-// Add generateStaticParams function
-// export async function generateStaticParams() {
-//   return [{ tab: "web-researcher" }, { tab: "document-processor" }];
-// }

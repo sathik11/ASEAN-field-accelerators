@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "export",
+  output: "standalone",
   reactStrictMode: true,
   swcMinify: true,
   // Ensure that Next.js can handle static assets correctly

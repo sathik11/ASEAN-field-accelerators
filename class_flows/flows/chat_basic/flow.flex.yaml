@@ -1,4 +1,4 @@
-entry: flow:ChatFlow
+entry: flow:AGNextFlow
 environment:
   python_requirements_txt: requirements.txt
 inputs:
@@ -19,6 +19,6 @@ init:
       azure_deployment: gpt-4o
       api_version: 2024-02-15-preview
       api_key: ${api_key}
-  max_total_token:
-    type: int
-    default: 4096
+  # max_total_token:
+  #   type: int
+  #   default: 4096

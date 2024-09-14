@@ -5,14 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  User,
-  Bot,
-  RefreshCw,
-  ChevronRight,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+import { User, Bot, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ReactMarkdown from "react-markdown";
@@ -42,7 +35,6 @@ export default function MultiAgentChat() {
   const [inProgressMessages, setInProgressMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [chatSession, setChatSession] = useState(0);
   const [isMessageListCollapsed, setIsMessageListCollapsed] = useState(true);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -251,17 +243,6 @@ export default function MultiAgentChat() {
               <RefreshCw className="h-4 w-4" />
               <span className="sr-only">Start a new chat</span>
             </Button>
-            {!isSidebarOpen && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsSidebarOpen(true)}
-                title="Open agent progress"
-              >
-                <ChevronRight className="h-4 w-4" />
-                <span className="sr-only">Open initialization progress</span>
-              </Button>
-            )}
           </div>
           <h1 className="text-xl font-bold">Multi-Agent Chatbot</h1>
         </div>

@@ -1,3 +1,5 @@
 FROM mcr.microsoft.com/azureml/promptflow/promptflow-runtime:latest
+COPY autogen_core-0.3.dev0-py3-none-any.whl .
+RUN pip install autogen_core-0.3.dev0-py3-none-any.whl
 COPY ./requirements.txt .
 RUN pip install -r requirements.txt

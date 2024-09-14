@@ -209,11 +209,23 @@ class WebResearcher:
 
             @override
             def on_message_done(self, message) -> None:
+                # print a citation to the file searched
+                message_content = message.content[0].text
+                annotations = message_content.annotations
+                citations = []
+                for index, annotation in enumerate(annotations):
+                    message_content.value = message_content.value.replace(
+                        annotation.text, f"[{index}]"
+                    )
+                    if file_citation := getattr(annotation, "file_citation", None):
+                        cited_file = client.files.retrieve(file_citation.file_id)
+                        citations.append(f"[{index}] {cited_file.filename}")
+                content = message_content.value + "\n\n" + "\n".join(citations)
                 self.mesg_queue.put_nowait(
                     Message(
                         type="message",
                         role="assistant",
-                        content=message.content[0].text.value,
+                        content=content,
                         status="success",
                         reference=self.bing_url_links,
                     ).model_dump_json(exclude_unset=False)
@@ -250,7 +262,7 @@ class WebResearcher:
             await self.mesg_queue.put(
                 StepIndicator(
                     title="Setting up Asissitant API",
-                    content=f"Created vector store - {vector_store_name} and adding files to the vector store. Status: {file_batch.status}",
+                    content=f"Created vector store - {vector_store_name} and adding {file_batch.file_counts} files to the vector store. Status: {file_batch.status}",
                 ).model_dump_json(exclude_unset=False)
             )
 

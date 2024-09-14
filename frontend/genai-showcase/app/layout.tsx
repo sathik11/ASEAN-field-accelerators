@@ -1,5 +1,8 @@
+// layout.tsx
 import "./globals.css";
 import { Inter } from "next/font/google";
+import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -15,7 +18,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body
+        className={`${inter.className} bg-gray-50 flex flex-col min-h-screen`}
+      >
+        <Navbar />
+        <main className="container mx-auto px-4 py-6 flex-grow">
+          {children}
+        </main>
+        <Footer />
+      </body>
     </html>
   );
 }
