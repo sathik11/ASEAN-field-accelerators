@@ -94,7 +94,7 @@ class AGNextFlow:
         self, question: str, chat_history: list = None
     ):  # -> Generator[Any, Any, None]:
         if self.test_mode:
-            return "This is a test"
+            yield "This is a test"
 
         run_task = asyncio.create_task(self.run(question, self.output_queue))
         while True:

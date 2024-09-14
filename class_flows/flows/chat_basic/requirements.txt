@@ -1,3 +1,4 @@
+promptflow
 promptflow-azure
 promptflow[azureml-serving]
 promptflow-tools
