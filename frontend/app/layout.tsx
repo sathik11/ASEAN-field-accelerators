@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
   title: "GenAI Chatbot Showcase",
-  description: "A showcase of various GenAI chatbots using Next.js App Router",
+  description: "A showcase of various GenAI chatbots",
 };
 
 export default function RootLayout({

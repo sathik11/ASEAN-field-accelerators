@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'frontend/genai-showcase/**/*'
+      - 'frontend/**/*'
       - '.github/workflows/azure-static-web-app.yml'
   pull_request:
     types: [opened, synchronize, reopened, closed]
