@@ -5,4 +5,3 @@ promptflow[azureml-serving]
 promptflow-tools
 uvicorn
 https://raw.githubusercontent.com/lordlinus/PromptFlow-LLMOps-Example/main/class_flows/flows/autogen_core-0.3.dev0-py3-none-any.whl
-opentelemetry-instrumentation-fastapi

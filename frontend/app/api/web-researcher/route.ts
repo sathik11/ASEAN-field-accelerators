@@ -115,7 +115,7 @@ export async function POST(req: NextRequest) {
   return new NextResponse(stream, {
     headers: {
       "Access-Control-Allow-Origin": "*",
-      "Content-Type": "text/event-stream; charset=utf-8",
+      "Content-Type": "text/event-stream",
       Connection: "keep-alive",
       "Cache-Control": "no-cache, no-transform",
       "X-Accel-Buffering": "no",

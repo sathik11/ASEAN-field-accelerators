@@ -17,7 +17,6 @@ async function parse({
   question: string;
 }) {
   log("Parsing question: " + question);
-  // const url = "http://localhost:8081/score";
   const url =
     "https://ssattiraju-llmops-endpoint.swedencentral.inference.ml.azure.com/score";
 
@@ -39,7 +38,7 @@ async function parse({
       },
       body: JSON.stringify({
         question: question,
-        test_mode: "false",
+        test: "false",
       }),
     });
 
@@ -123,7 +122,7 @@ export async function POST(req: NextRequest) {
   return new NextResponse(stream, {
     headers: {
       "Access-Control-Allow-Origin": "*",
-      "Content-Type": "text/event-stream; charset=utf-8",
+      "Content-Type": "text/event-stream",
       Connection: "keep-alive",
       "Cache-Control": "no-cache, no-transform",
       "X-Accel-Buffering": "no",

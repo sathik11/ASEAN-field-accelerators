@@ -265,6 +265,7 @@ class MarketingManagerAgent(RoutedAgent):
                     body=UserMessage(
                         content=message.body.content,
                         source=source,  # Include writer's source
+                        
                     )
                 ),
                 self._editor,
